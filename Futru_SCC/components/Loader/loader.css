@@ -1,16 +1,7 @@
-/* Container to help center the spinning element */
-.loader-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 80px; /* Match the size from the SVG example */
-    height: 80px;
-}
-
-/* The spinning element */
+/* The spinning loader element */
 .loader {
     /* Dimensions and shape */
-    width: 60px; /* Inner size */
+    width: 60px;
     height: 60px;
     border-radius: 50%;
     
@@ -24,7 +15,6 @@
     
     /* Simulate the 'gap' (The image is gapped, not a full circle) */
     /* To create the gap, we make the border transparent for a small section */
-    /* Since we can't use strokeDasharray, this is the closest we get for the two colors */
     border-right-color: transparent; /* Makes the top-right part gapped/transparent */
     border-top-color: #D0C6E9; /* Ensure other sides are light purple */
     border-left-color: #D0C6E9; /* Ensure other sides are light purple */
@@ -32,12 +22,6 @@
     /* Animation: Continuous spin */
     animation: rotation 1.2s linear infinite;
 }
-
-/* * NOTE: To create the segmented look where the dark purple part grows and moves,
-* you need advanced CSS animation techniques that are typically not supported 
-* by React Native's CSS compilers (like animating border-width/color in complex ways).
-* The current setup only creates a static two-colored arc that rotates.
-*/
 
 @keyframes rotation {
     0% {

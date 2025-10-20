@@ -1,0 +1,12 @@
+import { Document } from "mongoose";
+
+export interface IUser {
+    _id?: string,
+    full_name: string;
+    username: string;
+    email: string;
+    SCC: string;
+    password: string;
+}
+
+export type UserDocument = IUser & Document;
