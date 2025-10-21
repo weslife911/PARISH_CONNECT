@@ -9,11 +9,11 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useEffect } from "react";
 import { UseCheckAuthQuery } from "@/services/Auth/queries";
 import { UseLogoutMutation } from "@/services/Auth/mutations";
-// import { router, useSegments } from "expo-router";
 
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutContent() {
+    // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
     const [fontsLoaded] = useFonts({
         "Roboto-Mono": require("../assets/fonts/RobotoMono-Bold.ttf")
     });
@@ -21,14 +21,13 @@ function RootLayoutContent() {
     const checkAuth = UseCheckAuthQuery();
     const logoutUser = UseLogoutMutation(); 
 
-    // useProtectedRoute(isAuthenticated, isAuthChecking); 
-
     useEffect(() => {
         if (fontsLoaded) {
             SplashScreen.hideAsync();
         }
     }, [fontsLoaded]);
 
+    // NOW check loading state AFTER all hooks
     if (!fontsLoaded || checkAuth.isPending || logoutUser.isPending) {
         return <Loader/>;
     }

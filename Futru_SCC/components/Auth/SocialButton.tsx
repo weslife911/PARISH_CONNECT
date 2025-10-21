@@ -8,9 +8,10 @@ const ICON_ASSETS: { [key: string]: ImageSourcePropType } = {
 
 interface SocialButtonProps {
     iconType?: string;
+    className?: string
 }
 
-function SocialButton({ iconType = 'google' }: SocialButtonProps) {
+function SocialButton({ iconType = 'google', className = "" }: SocialButtonProps) {
   
   const imageSource: ImageSourcePropType = 
     ICON_ASSETS[iconType as keyof typeof ICON_ASSETS] || ICON_ASSETS['google'];
@@ -23,7 +24,7 @@ function SocialButton({ iconType = 'google' }: SocialButtonProps) {
       <Image
         source={imageSource}
         style={{ width: 84, height: 84 }}
-        className=""
+        className={className}
       />
     </View>
   );

@@ -1,5 +1,5 @@
 import { useAuthStore } from "@/store/useAuthStore";
-import { AuthReturnType, LoginUser } from "@/types/authTypes";
+import { AuthReturnType, LoginUserType, SignupUserType } from "@/types/authTypes";
 import Toast from "react-native-toast-message";
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -11,9 +11,8 @@ export const useLoginUserMutation = () => {
     const { loginUser } = useAuthStore();
 
     return useMutation({
-        mutationFn: (data: LoginUser) => loginUser(data),
+        mutationFn: (data: LoginUserType) => loginUser(data),
         onSuccess: async(data: AuthReturnType) => {
-            console.log("Login Mutation Success (API returned non-error status)");
             if(data?.success) {
                 if(data?.token) {
                     await AsyncStorage.setItem(AUTH_TOKEN_KEY, data?.token); 
@@ -45,6 +44,44 @@ export const useLoginUserMutation = () => {
         onSettled: async(_, error) => {
             if(error) {
                 console.error("Login Mutation Settled with Error:", error); 
+            } else {
+                await queryClient.invalidateQueries({
+                    queryKey: ["currentUser"]
+                });
+            }
+        }
+    });
+}
+
+export const UseSignupUserMutation = () => {
+    const { signupUser } = useAuthStore();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (data: SignupUserType) => signupUser(data),
+        onSuccess: async(data: AuthReturnType) => {
+            if(data?.success) {
+                if(data?.token) {
+                    await AsyncStorage.setItem(AUTH_TOKEN_KEY, data?.token); 
+                }
+                Toast.show({
+                    type: "success",
+                    text1: data?.message,
+                    position: "top",
+                    visibilityTime: 4000
+                });
+            } else {
+                Toast.show({
+                    type: "error",
+                    text1: data?.message || "Signup failed due to incorrect credentials.",
+                    position: "top",
+                    visibilityTime: 4000
+                });
+            }
+        },
+        onSettled: async(_, error) => {
+            if(error) {
+                console.error("Signup Mutation Settled with Error:", error); 
             } else {
                 await queryClient.invalidateQueries({
                     queryKey: ["currentUser"]

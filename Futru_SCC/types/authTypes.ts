@@ -1,11 +1,11 @@
 
 
-export type LoginUser = {
+export type LoginUserType = {
     email: string,
     password: string
 }
 
-export type SignupUser = {
+export type SignupUserType = {
     full_name: string,
     username: string,
     email: string,
@@ -22,8 +22,8 @@ export type AuthReturnType = {
 
 export type useAuthStoreType = {
     isAuthenticated: boolean,
-    loginUser: (data: LoginUser) => Promise<AuthReturnType>,
-    signupUser: (data: SignupUser) => Promise<AuthReturnType>,
+    loginUser: (data: LoginUserType) => Promise<AuthReturnType>,
+    signupUser: (data: SignupUserType) => Promise<AuthReturnType>,
     checkAuth: () => void,
     logout: () => Promise<void>
 };

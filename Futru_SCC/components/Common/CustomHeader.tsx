@@ -10,11 +10,9 @@ export default function CustomHeader() {
   const [isPopoverVisible, setIsPopoverVisible] = useState(false);
   const logoutUser = UseLogoutMutation();  
 
-  // Get both isAuthenticated and the logout function from the store
   const { isAuthenticated } = useAuthStore(); 
 
   const handleMenuPress = () => {
-    // This is Expo Router's navigation for the drawer, wrapped by useNavigation
     navigation.openDrawer();
   }
     
@@ -22,24 +20,20 @@ export default function CustomHeader() {
     setIsPopoverVisible(!isPopoverVisible);
   };
   
-  // FIX: Implement logic for each action
   const handleOptionSelect = (action: string) => {
     setIsPopoverVisible(false);
     
     switch (action) {
         case 'login':
-            // Assuming the router is available or using navigation
-            navigation.navigate('(auth)' as never); // Navigate to the auth group
+            navigation.navigate('(auth)' as never);
             break;
         case 'logout':
             logoutUser.mutate();
             break;
         case 'view_profile':
-            // navigation.navigate('profile' as never);
             console.log("Navigating to Profile");
             break;
         case 'settings':
-            // navigation.navigate('settings' as never);
             console.log("Navigating to Settings");
             break;
         default:
@@ -59,13 +53,10 @@ export default function CustomHeader() {
     { label: 'Logout', action: 'logout', requiredAuth: true, icon: LogOut, isDestructive: true }, 
   ];
   
-  // FIX: Filter options based on authentication state
   const displayedOptions = allPopoverOptions.filter(option => {
     if (isAuthenticated) {
-        // Show only options that REQUIRE authentication
         return option.requiredAuth === true;
     } else {
-        // Show only options that DO NOT REQUIRE authentication
         return option.requiredAuth === false;
     }
   });
@@ -124,7 +115,6 @@ export default function CustomHeader() {
                 `}
                 onPress={() => handleOptionSelect(item.action)}
               >
-                {/* FIX: Render icon if available */}
                 {item.icon && <item.icon size={18} color={item.isDestructive ? "#fff" : "#000"} className="mr-2" />} 
                 <Text 
                   className={`

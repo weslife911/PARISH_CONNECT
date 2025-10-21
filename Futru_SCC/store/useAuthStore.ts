@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import { AuthReturnType, LoginUser, SignupUser, useAuthStoreType } from "@/types/authTypes"
+import { AuthReturnType, LoginUserType, SignupUserType, useAuthStoreType } from "@/types/authTypes"
 import { axiosIntance } from "@/lib/axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -8,7 +8,7 @@ const AUTH_TOKEN_KEY = "auth_token";
 export const useAuthStore = create<useAuthStoreType>((set) => ({
     isAuthenticated: false,
 
-    loginUser: async(data: LoginUser): Promise<AuthReturnType> => {
+    loginUser: async(data: LoginUserType): Promise<AuthReturnType> => {
         try {
             const response = await axiosIntance.post("/login", data);
             const authData: AuthReturnType = response.data;
@@ -33,16 +33,27 @@ export const useAuthStore = create<useAuthStoreType>((set) => ({
         }
     },
     
-    signupUser: async(data: SignupUser): Promise<AuthReturnType> => {
+    signupUser: async(data: SignupUserType): Promise<AuthReturnType> => {
         try {
             const response = await axiosIntance.post("/signup", data);
-            return response.data;
+            const authData: AuthReturnType = response.data;
+            if (authData.success && authData.token) {
+                await AsyncStorage.setItem(AUTH_TOKEN_KEY, authData.token);
+                set({ isAuthenticated: true }); 
+                return authData;
+            } else {
+                set({ isAuthenticated: false });
+                return authData;
+            }
         } catch (error: any) {
-            throw new Error(
+            set({ isAuthenticated: false });
+            
+            const errorMessage = 
                 error.response?.data?.message || 
                 error.message || 
-                "Signup failed"
-            );
+                "Network error occurred";
+            
+            throw new Error(errorMessage);
         }
     },
     
@@ -53,8 +64,6 @@ export const useAuthStore = create<useAuthStoreType>((set) => ({
             set({ isAuthenticated: false });
             return null;
         }
-
-        console.log(auth_token);
 
         try {
             const response = await axiosIntance.get("/check", {

@@ -4,19 +4,10 @@ import SingleTextField from '@/components/Common/SingleTextField'
 import { Text, View } from 'react-native'
 import { Link, useRouter } from "expo-router"
 import { useLoginUserMutation } from "@/services/Auth/mutations"
-import { AuthReturnType, LoginUser } from '@/types/authTypes';
+import { AuthReturnType, LoginUserType } from '@/types/authTypes';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { useState } from 'react';
-
-const validationSchema = Yup.object({
-  email: Yup.string()
-    .email('Invalid email address')
-    .required('Email is required'),
-  password: Yup.string()
-    .min(8, 'Password must be at least 8 characters')
-    .required('Password is required'),
-});
 
 function LoginPage() {
 
@@ -26,6 +17,15 @@ function LoginPage() {
 
   const [showPassword, setShowPassword] = useState(false);
 
+  const validationSchema = Yup.object({
+    email: Yup.string()
+      .email('Invalid email address')
+      .required('Email is required'),
+    password: Yup.string()
+      .min(8, 'Password must be at least 8 characters')
+      .required('Password is required'),
+  });
+
   return (
     <View className='flex-1 justify-center items-center p-5 mt-20'>
       
@@ -33,11 +33,10 @@ function LoginPage() {
         initialValues={{ email: '', password: "" }}
         validationSchema={validationSchema}
         onSubmit={values => {
-          console.log("h1")
       loginUserMutation.mutate({ 
         email: values.email,
         password: values.password
-      } as LoginUser, {
+      } as LoginUserType, {
       
         onSuccess: (data: AuthReturnType) => {
           if(data.success) {
