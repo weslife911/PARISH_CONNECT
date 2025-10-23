@@ -10,7 +10,8 @@ export type SignupUserType = {
     username: string,
     email: string,
     SCC: string,
-    password: string
+    password: string,
+    confirmPassword?: string
 }
 
 export type AuthReturnType = {

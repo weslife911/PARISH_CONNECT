@@ -53,7 +53,7 @@ export const useLoginUserMutation = () => {
     });
 }
 
-export const UseSignupUserMutation = () => {
+export const useSignupUserMutation = () => {
     const { signupUser } = useAuthStore();
     const queryClient = useQueryClient();
 

@@ -40,13 +40,10 @@ function RootLayoutContent() {
     }
 
     return (
-        // Ensured SafeAreaProvider is bg-white
-        <SafeAreaProvider className="bg-white"> 
-            {/* Ensured GestureHandlerRootView is bg-white */}
-            <GestureHandlerRootView className="flex-1 bg-white"> 
-                {/* Ensured KeyboardAvoidingView is bg-white */}
+        <SafeAreaProvider> 
+            <GestureHandlerRootView className="flex-1"> 
                 <KeyboardAvoidingView 
-                    className="flex-1 bg-white"  
+                    className="flex-1"  
                     behavior={Platform.OS === "ios" ? "padding" : "height"}
                 >
                     <Drawer screenOptions={{

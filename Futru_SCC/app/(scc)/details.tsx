@@ -5,10 +5,14 @@ import {
     ScrollView,
     StyleSheet,
     TouchableOpacity,
-    Image, // Import Image component
-    FlatList, // Import FlatList for horizontal image scrolling
+    Image,
+    FlatList,
 } from 'react-native';
 import { Stack } from "expo-router";
+
+// STEP 1: Statically import the local assets here.
+// NOTE: Assuming your dummy image is at this path.
+const DUMMY_IMAGE = require('@/assets/images/dummy.png');
 
 // --- Dummy Data for the Details Page ---
 const DETAILS_DATA = {
@@ -21,18 +25,20 @@ const DETAILS_DATA = {
         total: 40,
     },
     officiatingPriest: 'Fr. John Bosco',
-    totalOfferings: 500, // Amount in currency, e.g., NGN or local currency
+    totalOfferings: 57500.00,
     description: 'This record covers the first meeting of the year, focusing on planning annual activities and an opening prayer session. It was a well-attended event with enthusiastic participation from all members.',
-    // NEW: Array of image URLs for the event
+    
+    // STEP 2: Store the imported image MODULES (the results of require())
+    // instead of the string paths.
     images: [
-        'https://picsum.photos/id/1018/300/200', // Placeholder image 1
-        'https://picsum.photos/id/1015/300/200', // Placeholder image 2
-        'https://picsum.photos/id/1019/300/200', // Placeholder image 3
-        'https://picsum.photos/id/1020/300/200', // Placeholder image 4
+        DUMMY_IMAGE, // Use the static import
+        DUMMY_IMAGE,
+        DUMMY_IMAGE,
+        DUMMY_IMAGE,
     ],
 };
 
-// Component to render a single detail row
+// Component to render a single detail row (omitted for brevity, no changes here)
 const DetailRow = ({ label, value }: { label: string, value: string | number }) => (
     <View className="flex-row justify-between p-4 border-b border-gray-200 bg-white">
         <Text className="text-base text-gray-500 font-medium">{label}</Text>
@@ -40,7 +46,7 @@ const DetailRow = ({ label, value }: { label: string, value: string | number }) 
     </View>
 );
 
-// Component for a styled block of attendance details
+// Component for a styled block of attendance details (omitted for brevity, no changes here)
 const AttendanceBlock = ({ men, women, total }: typeof DETAILS_DATA.attendance) => (
     <View className="mt-4 p-4 rounded-xl bg-indigo-50 border border-indigo-200 mx-4">
         <Text className="text-lg font-bold text-indigo-700 mb-2">Attendance Summary</Text>
@@ -60,15 +66,17 @@ const AttendanceBlock = ({ men, women, total }: typeof DETAILS_DATA.attendance) 
 );
 
 // Component to render event images horizontally
-const EventImages = ({ images }: { images: string[] }) => {
+const EventImages = ({ images }: { images: number[] }) => {
     if (!images || images.length === 0) {
-        return null; // Don't render if no images
+        return null;
     }
 
-    const renderItem = ({ item }: { item: string }) => (
+    // The 'item' here is now the required image module (a number/ID), not a string path.
+    const renderItem = ({ item }: { item: number }) => (
         <TouchableOpacity className="mr-3 shadow-md rounded-lg overflow-hidden">
             <Image
-                source={{ uri: item }}
+                // STEP 3: Pass the imported module directly. No need for require()
+                source={item}
                 style={styles.eventImage}
                 resizeMode="cover"
             />
@@ -82,7 +90,8 @@ const EventImages = ({ images }: { images: string[] }) => {
                 horizontal
                 data={images}
                 renderItem={renderItem}
-                keyExtractor={(item, index) => `image-${index}`}
+                // Key extractor uses index since all images are the same dummy image
+                keyExtractor={(_, index) => `image-${index}`}
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.imageGalleryContainer}
             />
@@ -92,7 +101,7 @@ const EventImages = ({ images }: { images: string[] }) => {
 
 
 export default function SCCDetailsPage() {
-    // Helper function to format currency (example for NGN)
+    // Helper function to format currency (omitted for brevity, no changes here)
     const formatCurrency = (amount: number) => {
         return `XAF ${amount.toLocaleString()}`;
     };
@@ -108,14 +117,12 @@ export default function SCCDetailsPage() {
             />
             <ScrollView className="flex-1 bg-gray-50">
 
-                {/* Header Information Block */}
+                {/* Offerings Summary (Highlighted) */}
                 <View className="p-4 bg-white border-b border-gray-200 mb-3">
                     <Text className="text-2xl font-bold text-gray-800">{DETAILS_DATA.SCC}</Text>
                     <Text className="text-lg text-gray-600 mt-1">{DETAILS_DATA.title}</Text>
                     <Text className="text-sm text-gray-400 mt-1">Date: {DETAILS_DATA.date}</Text>
                 </View>
-
-                {/* Offerings Summary (Highlighted) */}
                 <View className="bg-green-600 p-5 mx-4 rounded-xl shadow-md mb-4">
                     <Text className="text-sm text-green-200 font-medium">Total Offerings</Text>
                     <Text className="text-4xl text-white font-extrabold mt-1">
@@ -129,7 +136,6 @@ export default function SCCDetailsPage() {
                 {/* General Details Section */}
                 <View className="mt-6 mx-4 rounded-xl overflow-hidden shadow-sm border border-gray-200">
                     <Text className="text-lg font-bold text-gray-800 p-4 bg-gray-100 border-b border-gray-200">Event Details</Text>
-
                     <DetailRow
                         label="Officiating Priest"
                         value={DETAILS_DATA.officiatingPriest}
@@ -145,17 +151,15 @@ export default function SCCDetailsPage() {
                 </View>
 
                 {/* Event Images Section */}
-                <EventImages images={DETAILS_DATA.images} />
+                <EventImages images={DETAILS_DATA.images as number[]} />
 
-                {/* Description/Notes Section */}
+                {/* Description/Notes Section and Action Button (omitted for brevity, no changes here) */}
                 <View className="mt-4 mb-8 mx-4 p-4 bg-white rounded-xl shadow-sm border border-gray-200">
                     <Text className="text-lg font-bold text-gray-800 mb-2">Description</Text>
                     <Text className="text-base text-gray-600 leading-relaxed">
                         {DETAILS_DATA.description}
                     </Text>
                 </View>
-
-                {/* Example of an Action Button */}
                 <TouchableOpacity className="bg-indigo-600 p-4 mx-4 rounded-xl mb-6">
                     <Text className="text-white text-center text-lg font-semibold">
                         Share Event Details
@@ -167,7 +171,7 @@ export default function SCCDetailsPage() {
     );
 }
 
-// Separate StyleSheet for pure React Native styles not supported by Tailwind (e.g., custom borders for subtotals)
+// StyleSheet (omitted for brevity, no changes here)
 const styles = StyleSheet.create({
     attendanceRow: {
         flexDirection: 'row',
@@ -176,35 +180,35 @@ const styles = StyleSheet.create({
     },
     attendanceLabel: {
         fontSize: 16,
-        color: '#4338ca', // indigo-700
+        color: '#4338ca',
     },
     attendanceValue: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#1e293b', // gray-800
+        color: '#1e293b',
     },
     totalRow: {
         borderTopWidth: 1,
-        borderTopColor: '#a5b4fc', // indigo-300
+        borderTopColor: '#a5b4fc',
         paddingTop: 10,
         marginTop: 5,
     },
     totalLabel: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#1e3a8a', // indigo-900
+        color: '#1e3a8a',
     },
     totalValue: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#1e3a8a', // indigo-900
+        color: '#1e3a8a',
     },
     imageGalleryContainer: {
-        paddingHorizontal: 16, // Add padding to the FlatList content
+        paddingHorizontal: 16,
     },
     eventImage: {
-        width: 150, // Fixed width for images
-        height: 100, // Fixed height for images
-        borderRadius: 8, // Rounded corners for images
+        width: 150,
+        height: 100,
+        borderRadius: 8,
     },
 });

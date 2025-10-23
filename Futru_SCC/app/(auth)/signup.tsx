@@ -5,7 +5,7 @@ import { Link, useRouter } from "expo-router"
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { useState } from 'react';
-import { UseSignupUserMutation } from '@/services/Auth/mutations';
+import { useSignupUserMutation } from '@/services/Auth/mutations';
 
 // Define the shape of all form values
 interface RegistrationValues {
@@ -18,6 +18,7 @@ interface RegistrationValues {
 }
 
 const validationSchema = Yup.object<RegistrationValues>().shape({
+
   fullName: Yup.string()
     .min(3, 'Full name must be at least 3 characters')
     .required('Full Name is required'),
@@ -43,10 +44,9 @@ function RegistrationPage() {
   const router = useRouter();
   const [step, setStep] = useState(1); 
   const [showPassword, setShowPassword] = useState(false);
-  const signupUserMutation = UseSignupUserMutation(); 
+  const signupUserMutation = useSignupUserMutation(); 
 
   const onSubmit = (values: RegistrationValues) => {
-    console.log("Final Registration Data:", values);
     
     signupUserMutation.mutate({
       full_name: values.fullName,
@@ -125,7 +125,7 @@ function RegistrationPage() {
                   text={values.scc}
                   onChangeText={handleChange("scc")}
                   onBlur={handleBlur("scc")} 
-                  label='SCC (Student/School Code)'
+                  label='SCC'
                   keyboardType='numeric'
                 />
                 {touched.scc && errors.scc && (

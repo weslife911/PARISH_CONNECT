@@ -12,8 +12,11 @@ interface SingleTextFieldProps {
     className?: string;
     secureTextEntry?: boolean;
     onBlur?: (e: any) => void;
-    showFieldData?: boolean; // Controls whether the eye icon is rendered
-    onToggleVisibility?: () => void; // Function to call when the eye icon is pressed
+    showFieldData?: boolean; 
+    onToggleVisibility?: () => void; 
+    // NEW PROPS for multiline input
+    multiline?: boolean; 
+    numberOfLines?: number; 
 }
 
 function SingleTextField({ 
@@ -25,30 +28,34 @@ function SingleTextField({
     className,
     secureTextEntry = false,
     onBlur,
-    showFieldData = false, // Flag to render the icon
-    onToggleVisibility // New prop for the toggle action
+    showFieldData = false, 
+    onToggleVisibility,
+    // Destructure new props
+    multiline = false,
+    numberOfLines = 1,
 }: SingleTextFieldProps) {
   
-  // 1. Determine if the icon should be rendered and made functional
-  const shouldRenderToggle = showFieldData && onToggleVisibility;
-
-  // 2. Adjust padding right if the icon is present (to prevent text overlap)
+  // Disable the toggle icon for multiline inputs
+  const shouldRenderToggle = showFieldData && onToggleVisibility && !multiline; 
   const inputPaddingRight = shouldRenderToggle ? 'pr-12' : 'pr-4';
+  
+  // Conditionally apply style for multiline to ensure vertical alignment and adequate height
+  const multilineStyles = multiline 
+    ? { minHeight: 120, textAlignVertical: 'top', paddingTop: 16 }
+    : {};
 
   const inputBaseClasses = `
     // w-full 
     border border-gray-700 
     rounded-lg 
-    // py-4 
+    py-4 // <-- ADDED HEIGHT VIA VERTICAL PADDING
     ${inputPaddingRight} // Dynamic padding
-    // pl-4 
+    pl-4 
     text-lg 
     text-black
     placeholder:text-gray-500
   `;
 
-  // 3. Determine which icon to display based on the current secureTextEntry prop value
-  // If secureTextEntry is TRUE (text is hidden), show Eye (to reveal).
   const IconComponent = secureTextEntry ? Eye : EyeOff;
 
   return (
@@ -79,6 +86,9 @@ function SingleTextField({
         keyboardType={keyboardType as TextInputProps['keyboardType']} 
         placeholderTextColor="#6B7280"
         secureTextEntry={secureTextEntry || false}
+        multiline={multiline}
+        numberOfLines={numberOfLines}
+        style={multilineStyles} // Apply multiline specific styles
       />
       
       {/* Visibility Toggle Icon */}

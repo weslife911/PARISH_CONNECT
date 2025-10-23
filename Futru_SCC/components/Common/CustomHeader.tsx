@@ -97,7 +97,7 @@ export default function CustomHeader() {
               top-14 
               right-0 
               w-40 
-              bg-white 
+              bg-white
               rounded-lg 
               border 
               border-gray-200 
