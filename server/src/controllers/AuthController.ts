@@ -1,11 +1,15 @@
 import { Request, Response } from 'express';
-import { validateSignupUser } from '../validation/validateSignupUser';
+import { validateSignupUser } from '../validation/Auth/validateSignupUser';
 import User from '../models/User';
 import { compare, genSalt, hash } from "bcryptjs"
 import { generateToken } from '../lib/genToken';
-import { validateLoginUser } from '../validation/validateLoginUser';
+import { validateLoginUser } from '../validation/Auth/validateLoginUser';
+import { validateEmailAuth } from '../validation/Auth/validateEmailAuth';
+import { validateResetPassword } from '../validation/Auth/validateResetPassword';
+import { decodeToken } from '../lib/decodeToken';
+import { IUser } from '../types/Auth/IUser';
 
-export const SignupController = async (req: Request, res: Response) => {
+export const signupUser = async (req: Request, res: Response) => {
     try {
         const validation = validateSignupUser.safeParse(req.body);
 
@@ -68,7 +72,7 @@ export const SignupController = async (req: Request, res: Response) => {
     }
 }
 
-export const LoginController = async(req: Request, res: Response) => {
+export const loginUser = async(req: Request, res: Response) => {
     try {
 
         const validation = validateLoginUser.safeParse(req.body);
@@ -109,6 +113,96 @@ export const LoginController = async(req: Request, res: Response) => {
 
     } catch (e: any) {
         console.error("Signup error:", e);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: e instanceof Error ? e.message : "An unknown error occurred"
+        });
+    }
+}
+
+export const verifyEmail = async(req: Request, res: Response) => {
+    try {
+
+        const validation = validateEmailAuth.safeParse(req.body);
+
+        if(!validation.success) return res.json({
+            success: false,
+            message: validation.error.issues[0]?.message
+        })
+
+        const { email } = validation.data;
+
+        const user = await User.findOne({ email });
+
+        if(!user) return res.status(404).json({
+            success: false,
+            message: "User with given email does not exist!"
+        });
+
+        const token = generateToken(user._id.toString())
+
+        return res.json({
+            success: true,
+            message: "Email verified successfully",
+            token
+        })
+
+    } catch (e: any) {
+        console.error("Verification error:", e);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: e instanceof Error ? e.message : "An unknown error occurred"
+        });
+    }
+}
+
+export const resetPassword = async(req: Request, res: Response) => {
+    try {
+        
+        const validation = validateResetPassword.safeParse(req.body);
+
+        if(!validation.success) return res.json({
+            success: false,
+            message: validation.error.issues[0]?.message
+        })
+
+        const { token, newPassword } = validation.data;
+
+        const decoded = decodeToken(token) as any;
+
+        if(!decoded) return res.json({
+            success: false,
+            message: "Incorrect JWT token provided"
+        });
+
+        const updatedUser = await User.findByIdAndUpdate(
+            decoded._id,
+            {
+                $set: { 
+                    password: newPassword,
+                }
+            },
+            {
+                new: true
+            }
+        );
+
+        if (!updatedUser) {
+            return res.json({
+                success: false,
+                message: "User not found or password reset failed."
+            });
+        }
+
+        return res.json({
+            success: true,
+            message: "Password successfully reset."
+        });
+
+    } catch (e: any) {
+        console.error("Verification error:", e);
         return res.status(500).json({
             success: false,
             message: "Internal server error",

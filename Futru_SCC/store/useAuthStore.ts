@@ -5,7 +5,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const AUTH_TOKEN_KEY = "auth_token";
 
-export const useAuthStore = create<useAuthStoreType>((set) => ({
+export const useAuthStore = create<useAuthStoreType>((set, get) => ({
     isAuthenticated: false,
 
     loginUser: async(data: LoginUserType): Promise<AuthReturnType> => {

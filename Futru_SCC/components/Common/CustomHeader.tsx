@@ -6,10 +6,10 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { UseLogoutMutation } from '@/services/Auth/mutations';
 
 export default function CustomHeader() {
+  // ALL HOOKS AT THE TOP - ALWAYS CALLED IN THE SAME ORDER
   const navigation = useNavigation();
   const [isPopoverVisible, setIsPopoverVisible] = useState(false);
   const logoutUser = UseLogoutMutation();  
-
   const { isAuthenticated } = useAuthStore(); 
 
   const handleMenuPress = () => {
@@ -63,7 +63,8 @@ export default function CustomHeader() {
 
 
   return (
-    <View className="bg-purple-100 mx-4 mt-12 mb-4 rounded-full px-6 py-4 flex-row justify-between items-center relative z-20">
+    // Changed: Removed mt-12. Adjusted mx-4 and added py-2 instead of py-4.
+    <View className="bg-purple-100 mx-4 mb-4 rounded-full px-6 py-2 mt-5 flex-row justify-between items-center relative z-20">
       
       {isPopoverVisible && (
         <TouchableWithoutFeedback onPress={closePopover}>
@@ -111,7 +112,7 @@ export default function CustomHeader() {
                   p-3 
                   flex-row items-center justify-start rounded-lg
                   ${index < displayedOptions.length - 1 && !item.isDestructive ? 'border-b border-gray-100' : ''}
-                  ${item.isDestructive ? 'bg-red-500 mt-1' : ''} // FIX: Apply red background and margin for destructive actions
+                  ${item.isDestructive ? 'bg-red-500 mt-1' : ''}
                 `}
                 onPress={() => handleOptionSelect(item.action)}
               >
@@ -119,7 +120,7 @@ export default function CustomHeader() {
                 <Text 
                   className={`
                     text-sm 
-                    ${item.isDestructive ? 'text-white' : 'text-gray-800'} // FIX: Text color for destructive actions
+                    ${item.isDestructive ? 'text-white' : 'text-gray-800'}
                   `}
                 >
                   {item.label}

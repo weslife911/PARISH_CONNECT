@@ -1,5 +1,5 @@
 import { Drawer } from "expo-router/drawer";
-import { KeyboardAvoidingView, Platform } from "react-native";
+import { KeyboardAvoidingView, Platform, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
@@ -8,18 +8,16 @@ import Loader from "@/components/Loader/Loader";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useEffect } from "react";
 import { UseCheckAuthQuery } from "@/services/Auth/queries";
-import { UseLogoutMutation } from "@/services/Auth/mutations";
 
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutContent() {
-    // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
+
+    const checkAuth = UseCheckAuthQuery();
+
     const [fontsLoaded] = useFonts({
         "Roboto-Mono": require("../assets/fonts/RobotoMono-Bold.ttf")
     });
-
-    const checkAuth = UseCheckAuthQuery();
-    const logoutUser = UseLogoutMutation(); 
 
     useEffect(() => {
         if (fontsLoaded) {
@@ -27,23 +25,35 @@ function RootLayoutContent() {
         }
     }, [fontsLoaded]);
 
-    // NOW check loading state AFTER all hooks
-    if (!fontsLoaded || checkAuth.isPending || logoutUser.isPending) {
-        return <Loader/>;
+    const isLoading = !fontsLoaded || checkAuth.isPending;
+
+    if (isLoading) {
+        return (
+            <SafeAreaProvider>
+                <GestureHandlerRootView className="flex-1">
+                    <View className="flex-1 bg-white">
+                        <Loader />
+                    </View>
+                </GestureHandlerRootView>
+            </SafeAreaProvider>
+        );
     }
 
     return (
-        <SafeAreaProvider>
-            <GestureHandlerRootView className="flex-1">
+        // Ensured SafeAreaProvider is bg-white
+        <SafeAreaProvider className="bg-white"> 
+            {/* Ensured GestureHandlerRootView is bg-white */}
+            <GestureHandlerRootView className="flex-1 bg-white"> 
+                {/* Ensured KeyboardAvoidingView is bg-white */}
                 <KeyboardAvoidingView 
                     className="flex-1 bg-white"  
                     behavior={Platform.OS === "ios" ? "padding" : "height"}
                 >
                     <Drawer screenOptions={{
                         headerShown: true,
+                        // CustomHeader handles SafeArea internally now
                         header: ({ navigation }) => <CustomHeader />, 
-                        headerTransparent: true,
-                        headerShadowVisible: false,
+                        // Removed headerTransparent: true
                         drawerType: 'slide', 
                         overlayColor: '#00000050',
                         drawerPosition: 'left',

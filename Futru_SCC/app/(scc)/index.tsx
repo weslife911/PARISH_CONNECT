@@ -1,18 +1,18 @@
+import NoRecords from "@/components/SCC/NoRecords";
+import RecordTab from "@/components/SCC/RecordTab";
 import { Image, Text, View } from "react-native"
 
 function SCCRecordsPage() {
 
+  const testArray = [
+    "a",
+    "b"
+  ];
+
   return (
-    <View className="flex-1 items-center justify-center bg-white">
-      <Image
-        source={require("@/assets/images/church.png")}
-        style={{ width: 275, height: 275,  }}
-        className="mb-16"
-      />
-      <Text className="font-[Roboto-Mono] text-center">
-        No SCC Records Found. Please add SCC Records to view them here.
-      </Text>
-    </View>
+    (testArray.length === 0 ? <NoRecords/> : <View>
+      <RecordTab/>
+    </View>)
   )
 }
 
