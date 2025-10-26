@@ -84,7 +84,7 @@ function LoginPage() {
 
         <View className='w-full flex-row justify-between items-center mt-3 mb-5'>
           <Link href="/(auth)/signup" asChild>
-            <Text className='text-blue-600'>{"Don't"} have an account? Sign Up</Text>
+            <Text className='text-blue-600'>Sign Up</Text>
           </Link>
           <Link href="/(auth)/forgot_password" asChild>
             <Text className='text-blue-600'>Forgot Password?</Text>

@@ -2,6 +2,7 @@ import express, { Application } from "express"
 import { config } from "dotenv"
 import { connectToDb } from "./db/connectToDb";
 import AuthRoutes from "./routes/AuthRoutes"
+import SCCRoutes from "./routes/SCCRoutes"
 import cors from "cors"
 
 config();
@@ -19,6 +20,7 @@ app.use(cors({
 }));
 
 app.use("/api/v1", AuthRoutes);
+app.use("/api/v1", SCCRoutes);
 
 const PORT: number = parseInt(process.env.PORT || '8080', 10) || 8080;
 

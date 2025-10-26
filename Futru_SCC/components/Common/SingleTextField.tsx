@@ -5,7 +5,7 @@ import { Eye, EyeOff } from "lucide-react-native"
 
 interface SingleTextFieldProps {
     label: string;
-    text: string;
+    value: string; // Changed to 'value' for consistency with Formik's values object
     onChangeText?: (text: string) => void;
     placeholder?: string;
     keyboardType?: TextInputProps['keyboardType'];
@@ -14,14 +14,16 @@ interface SingleTextFieldProps {
     onBlur?: (e: any) => void;
     showFieldData?: boolean; 
     onToggleVisibility?: () => void; 
-    // NEW PROPS for multiline input
     multiline?: boolean; 
     numberOfLines?: number; 
+    // ADDED: Prop for error message
+    error?: string | false | undefined | null; 
+    returnKeyType?: TextInputProps['returnKeyType']; // Added missing returnKeyType
 }
 
 function SingleTextField({ 
     label, 
-    text, 
+    value, // Changed from text to value
     onChangeText,
     placeholder, 
     keyboardType = 'default', 
@@ -30,9 +32,10 @@ function SingleTextField({
     onBlur,
     showFieldData = false, 
     onToggleVisibility,
-    // Destructure new props
     multiline = false,
     numberOfLines = 1,
+    error, // Destructure the new error prop
+    returnKeyType = 'default', // Default for new prop
 }: SingleTextFieldProps) {
   
   // Disable the toggle icon for multiline inputs
@@ -43,13 +46,17 @@ function SingleTextField({
   const multilineStyles = multiline 
     ? { minHeight: 120, textAlignVertical: 'top', paddingTop: 16 }
     : {};
+  
+  // Apply error styling
+  const errorBorderClass = error ? 'border-red-500' : 'border-gray-300'; // Changed from gray-700 to gray-300 for better contrast/modern look
 
   const inputBaseClasses = `
-    // w-full 
-    border border-gray-700 
+    w-full 
+    border 
+    ${errorBorderClass} // Dynamic error border
     rounded-lg 
-    py-4 // <-- ADDED HEIGHT VIA VERTICAL PADDING
-    ${inputPaddingRight} // Dynamic padding
+    py-4 
+    ${inputPaddingRight} 
     pl-4 
     text-lg 
     text-black
@@ -59,7 +66,8 @@ function SingleTextField({
   const IconComponent = secureTextEntry ? Eye : EyeOff;
 
   return (
-    <View className="relative w-full my-4"> 
+    // Use marginBottom to account for error message space
+    <View className="relative w-full mb-6 mt-4"> 
         
       {/* Floating Label */}
       <View 
@@ -78,7 +86,7 @@ function SingleTextField({
 
       {/* TextInput */}
       <TextInput
-        value={text}
+        value={value} // Use value
         onChangeText={onChangeText}
         onBlur={onBlur}
         placeholder={placeholder}
@@ -89,6 +97,7 @@ function SingleTextField({
         multiline={multiline}
         numberOfLines={numberOfLines}
         style={multilineStyles} // Apply multiline specific styles
+        returnKeyType={returnKeyType} // Use returnKeyType
       />
       
       {/* Visibility Toggle Icon */}
@@ -107,6 +116,13 @@ function SingleTextField({
           {/* Render the appropriate Lucide icon component */}
           <IconComponent size={24} color="#6B7280" /> 
         </TouchableOpacity>
+      )}
+
+      {/* ADDED: Error Text Display */}
+      {error && (
+        <Text className="text-red-500 text-xs mt-1 absolute bottom-[-16] left-4">
+          {error}
+        </Text>
       )}
 
     </View>

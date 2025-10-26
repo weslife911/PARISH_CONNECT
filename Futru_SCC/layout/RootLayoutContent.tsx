@@ -5,7 +5,7 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import CustomHeader from "@/components/Common/CustomHeader";
 import Loader from "@/components/Loader/Loader";
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+// import { GestureHandlerRootView } from 'react-native-gesture-handler'; // REMOVED
 import { useEffect } from "react";
 import { UseCheckAuthQuery } from "@/services/Auth/queries";
 
@@ -30,18 +30,18 @@ function RootLayoutContent() {
     if (isLoading) {
         return (
             <SafeAreaProvider>
-                <GestureHandlerRootView className="flex-1">
+                {/* <GestureHandlerRootView className="flex-1"> REMOVED */}
                     <View className="flex-1 bg-white">
                         <Loader />
                     </View>
-                </GestureHandlerRootView>
+                {/* </GestureHandlerRootView> REMOVED */}
             </SafeAreaProvider>
         );
     }
 
     return (
         <SafeAreaProvider> 
-            <GestureHandlerRootView className="flex-1"> 
+            {/* <GestureHandlerRootView className="flex-1"> REMOVED */}
                 <KeyboardAvoidingView 
                     className="flex-1"  
                     behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -73,7 +73,7 @@ function RootLayoutContent() {
                         />
                     </Drawer>
                 </KeyboardAvoidingView>
-            </GestureHandlerRootView>
+            {/* </GestureHandlerRootView> REMOVED */}
         </SafeAreaProvider>
     );
 }

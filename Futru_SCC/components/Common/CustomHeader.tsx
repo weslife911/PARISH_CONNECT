@@ -1,16 +1,17 @@
 import { View, TouchableOpacity, Text, TouchableWithoutFeedback } from 'react-native';
 import { Menu, UserCircle, LogOut } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from "expo-router"
 import { useState } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { UseLogoutMutation } from '@/services/Auth/mutations';
+import { useNavigation } from "@react-navigation/native"
 
 export default function CustomHeader() {
-  // ALL HOOKS AT THE TOP - ALWAYS CALLED IN THE SAME ORDER
-  const navigation = useNavigation();
   const [isPopoverVisible, setIsPopoverVisible] = useState(false);
   const logoutUser = UseLogoutMutation();  
   const { isAuthenticated } = useAuthStore(); 
+  const router = useRouter();
+  const navigation = useNavigation();
 
   const handleMenuPress = () => {
     navigation.openDrawer();
@@ -25,13 +26,13 @@ export default function CustomHeader() {
     
     switch (action) {
         case 'login':
-            navigation.navigate('(auth)' as never);
+          router.push("/(auth)");
             break;
         case 'logout':
             logoutUser.mutate();
             break;
         case 'view_profile':
-            console.log("Navigating to Profile");
+          router.push("/(auth)/profile");
             break;
         case 'settings':
             console.log("Navigating to Settings");

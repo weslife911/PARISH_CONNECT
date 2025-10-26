@@ -125,7 +125,7 @@ function RegistrationPage() {
                   text={values.scc}
                   onChangeText={handleChange("scc")}
                   onBlur={handleBlur("scc")} 
-                  label='SCC'
+                  label='SCC Name'
                   keyboardType='numeric'
                 />
                 {touched.scc && errors.scc && (

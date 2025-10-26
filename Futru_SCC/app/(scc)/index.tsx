@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useRouter } from "expo-router"
 import NoRecords from '@/components/SCC/NoRecords';
+import { Cross } from 'lucide-react-native';
 
 // Centralized the static data definition
 const RECORD_DATA = [
@@ -82,10 +83,15 @@ export default function SCCRecordsPage() {
             <TouchableOpacity 
                 style={styles.fab}
                 // Add the action for the FAB here
+                className='w-14 h-14 rounded-full bg-blue-600 
+             flex justify-center items-center 
+             absolute bottom-6 right-6'
                 onPress={() => router.push('/(scc)/addRecord')} 
             >
                 {/* Placeholder content for the FAB (e.g., a simple plus sign) */}
-                <Text style={styles.fabText}>+</Text> 
+                {/* <Text style={styles.fabText}>+</Text> 
+                 */}
+                 <Cross size={24} color="white" />
             </TouchableOpacity>
             {/* ------------------------------------ */}
             

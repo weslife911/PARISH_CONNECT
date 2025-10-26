@@ -158,6 +158,7 @@ export const verifyEmail = async(req: Request, res: Response) => {
     }
 }
 
+
 export const resetPassword = async(req: Request, res: Response) => {
     try {
         
@@ -170,18 +171,23 @@ export const resetPassword = async(req: Request, res: Response) => {
 
         const { token, newPassword } = validation.data;
 
-        const decoded = decodeToken(token) as any;
+        const decoded = decodeToken(token) as any; 
 
-        if(!decoded) return res.json({
-            success: false,
-            message: "Incorrect JWT token provided"
-        });
+        if(!decoded || !decoded.id) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid or expired reset token provided."
+            });
+        }
+        
+        const salt = await genSalt(10);
+        const hashedPassword = await hash(newPassword, salt);
 
         const updatedUser = await User.findByIdAndUpdate(
-            decoded._id,
+            decoded.id,
             {
                 $set: { 
-                    password: newPassword,
+                    password: hashedPassword,
                 }
             },
             {
@@ -190,7 +196,7 @@ export const resetPassword = async(req: Request, res: Response) => {
         );
 
         if (!updatedUser) {
-            return res.json({
+            return res.status(404).json({
                 success: false,
                 message: "User not found or password reset failed."
             });
@@ -202,7 +208,14 @@ export const resetPassword = async(req: Request, res: Response) => {
         });
 
     } catch (e: any) {
-        console.error("Verification error:", e);
+        if (e.name === 'JsonWebTokenError' || e.name === 'TokenExpiredError') {
+             return res.status(401).json({
+                success: false,
+                message: "Invalid or expired reset token."
+            });
+        }
+        
+        console.error("Reset password error:", e);
         return res.status(500).json({
             success: false,
             message: "Internal server error",
