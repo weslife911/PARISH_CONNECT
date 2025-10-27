@@ -4,7 +4,6 @@ import { validateSCCRecord } from "../validation/SCC/validateSCCRecord";
 
 export const addSCCRecord = async(req: Request, res: Response) => {
     try {
-
         const validation = validateSCCRecord.safeParse(req.body);
 
         if(!validation.success) return res.json({
@@ -14,21 +13,21 @@ export const addSCCRecord = async(req: Request, res: Response) => {
 
         const { sccName, faithSharingName, host, date, officiatingPriestName, menAttendance, womenAttendance, youthAttendance, catechumenAttendance, wordOfLife, totalOfferings, task, nextHost, images } = validation.data;
 
-        const record = await new SCC({
+        const record = await SCC.create({
             sccName,
             faithSharingName,
             host,
             date,
             officiatingPriestName,
-            menAttendance: menAttendance || 0,
-            womenAttendance: womenAttendance || 0,
-            youthAttendance: youthAttendance || 0,
-            catechumenAttendance: catechumenAttendance || 0,
+            menAttendance: menAttendance ?? 0,
+            womenAttendance: womenAttendance ?? 0,
+            youthAttendance: youthAttendance ?? 0,
+            catechumenAttendance: catechumenAttendance ?? 0,
             wordOfLife,
-            totalOfferings: totalOfferings || 0,
+            totalOfferings: totalOfferings ?? 0,
             task,
             nextHost,
-            images
+            images: images || []
         });
 
         if(!record) return res.json({
@@ -37,12 +36,12 @@ export const addSCCRecord = async(req: Request, res: Response) => {
         })
 
         return res.json({
-            success: false,
-            message: "Record created successfuly!"
+            success: true,
+            message: "Record created successfully!"
         })
 
     } catch (e: any) {
-        console.error("Signup error:", e);
+        console.error("Add SCC Record error:", e);
         return res.status(500).json({
             success: false,
             message: "Internal server error",

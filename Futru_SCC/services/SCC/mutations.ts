@@ -27,7 +27,6 @@ export const useCreateSCCRecordMutation = () => {
             }
         },
         onError: async(error) => {
-            console.error("Record Mutation Network/Request Error:", error);
             Toast.show({
                 type: "error",
                 text1: error.message || "A network or internal error occurred during adding record.",
@@ -36,9 +35,7 @@ export const useCreateSCCRecordMutation = () => {
             });
         },
         onSettled: async(_, error) => {
-            if(error) {
-                console.error("Record Mutation Settled with Error:", error); 
-            } else {
+            if(!error) {
                 await queryClient.invalidateQueries({
                     queryKey: ["record"]
                 });

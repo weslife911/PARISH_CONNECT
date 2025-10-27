@@ -51,48 +51,43 @@ const initialFormValues = {
     totalOfferings: '',     
     task: '',             
     nextHost: '', 
-            
 };
 
 type FormValues = typeof initialFormValues;
 
-// Validation Schema using Yup (Unchanged, but crucial for date input)
+// Validation Schema using Yup
 const validationSchema = [
     // Step 1 Schema: Details
     yup.object({
         sccName: yup.string().required("SCC Name is required."),
         faithSharingName: yup.string().required("Faith Sharing Name is required."),
-        // **Crucial:** Allows manual input validation for YYYY-MM-DD
         date: yup.string().required("Date is required.").matches(
             /^\d{4}-\d{2}-\d{2}$/, 
             "Date must be in YYYY-MM-DD format (e.g., 2025-12-31)."
         ), 
-        officiatingPriest: yup.string().required("Officiating Priest/Facilitator is required."),
+        officiatingPriestName: yup.string().required("Officiating Priest/Facilitator is required."),
         host: yup.string().required("Host is required."),
     }),
     
-    // Step 2 and 3 Schemas (Omitted for brevity, unchanged)
+    // Step 2 Schema
     yup.object({
         totalOfferings: yup
             .string()
             .required("Total Offerings is required.")
             .matches(/^[0-9]+(\.[0-9]{1,2})?$/, "Invalid currency format (e.g., 57500 or 57500.00)."), 
-        // These fields are already set to validate as numbers in the schema.
         menAttendance: yup.string().matches(/^[0-9]*$/, "Must be a number.").nullable(),
         womenAttendance: yup.string().matches(/^[0-9]*$/, "Must be a number.").nullable(),
         youthAttendance: yup.string().matches(/^[0-9]*$/, "Must be a number.").nullable(),
-        catechumen: yup.string().matches(/^[0-9]*$/, "Must be a number.").nullable(),
+        catechumenAttendance: yup.string().matches(/^[0-9]*$/, "Must be a number.").nullable(),
     }),
     
+    // Step 3 Schema
     yup.object({
         wordOfLife: yup.string().required("Word of Life is required.").min(10, "Word of Life should be descriptive (min 10 characters)."), 
         task: yup.string().required("Task/Outcome is required."),
         nextHost: yup.string().required("Next Host is required."),
     }),
 ];
-
-
-// Helper to format Date object to YYYY-MM-DD string
 
 export default function AddRecord() {
     const [currentStep, setCurrentStep] = useState(1); 
@@ -103,6 +98,43 @@ export default function AddRecord() {
 
     const addRecordMutation = useCreateSCCRecordMutation();
     
+    // Handler for the final submit button
+    async function handleSubmit(values: FormValues) {
+        const safeParseInt = (value: string): number | undefined => {
+            if (!value || value.trim() === '') return undefined;
+            const parsed = parseInt(value, 10);
+            return isNaN(parsed) ? undefined : parsed;
+        };
+        
+        const safeParseFloat = (value: string): number | undefined => {
+            if (!value || value.trim() === '') return undefined;
+            const parsed = parseFloat(value);
+            return isNaN(parsed) ? undefined : parsed;
+        }
+
+        await addRecordMutation.mutate({
+            sccName: values.sccName,
+            faithSharingName: values.faithSharingName,
+            host: values.host,
+            date: values.date,
+            officiatingPriestName: values.officiatingPriestName,
+            menAttendance: safeParseInt(values.menAttendance),
+            womenAttendance: safeParseInt(values.womenAttendance),
+            youthAttendance: safeParseInt(values.youthAttendance),
+            catechumenAttendance: safeParseInt(values.catechumenAttendance),
+            wordOfLife: values.wordOfLife,
+            totalOfferings: safeParseFloat(values.totalOfferings), 
+            task: values.task,
+            nextHost: values.nextHost
+        }, {
+            onSuccess: (data: sccRecordReturnType) => {
+                if(data.success) {
+                    router.push("/(scc)");
+                }
+            }
+        })
+    }
+
     const formik = useFormik<FormValues>({
         initialValues: initialFormValues,
         validationSchema: yup.object().shape(validationSchema.reduce((acc, schema) => ({ ...acc, ...schema.fields }), {})),
@@ -121,36 +153,8 @@ export default function AddRecord() {
         setTouched
     } = formik;
 
-
-    // Handler for the final submit button (Omitted for brevity, unchanged)
-    async function handleSubmit(values: FormValues) {
-        
-        addRecordMutation.mutate({
-            sccName: values.sccName,
-            faithSharingName: values.faithSharingName,
-            host: values.host,
-            date: values.date,
-            officiatingPriestName: values.officiatingPriestName,
-            menAttendance: parseInt(values.menAttendance),
-            womenAttendance: parseInt(values.womenAttendance),
-            youthAttendance: parseInt(values.youthAttendance),
-            catechumenAttendance: parseInt(values.catechumenAttendance),
-            wordOfLife: values.wordOfLife,
-            totalOfferings: parseInt(values.totalOfferings),
-            task: values.task,
-            nextHost: values.nextHost
-        }, {
-            onSuccess: (data: sccRecordReturnType) => {
-                if(data.success) {
-                    router.push("/(scc)");
-                }
-            }
-        })
-    };
-
     // Date Picker Handlers
     const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-        
         if (Platform.OS === 'android') {
             setShowDatePicker(false);
         }
@@ -166,19 +170,14 @@ export default function AddRecord() {
         }
     };
 
-    // Helper to determine the date object for the picker value (Unchanged)
+    // Helper to determine the date object for the picker value
     const getCurrentDate = (dateValue: string): Date => {
-         // ... date logic ...
          if (!dateValue) return new Date();
          return new Date(`${dateValue}T00:00:00.000Z`);
     };
-    
-    // --- Image Selection Logic (Omitted for brevity) ---
-    // ...
 
     // Function to render the fields for the current step
     const renderStepContent = () => {
-        // MODIFIED: Correctly strip non-digit characters for integers, and non-digit/non-decimal for currency
         const handleNumericChange = (field: keyof FormValues, text: string, isDecimal: boolean = false) => {
             const cleanText = isDecimal ? text.replace(/[^0-9.]/g, '') : text.replace(/[^0-9]/g, '');
             handleChange(field)(cleanText);
@@ -186,41 +185,39 @@ export default function AddRecord() {
 
         const hasError = (field: keyof FormValues) => touched[field] && errors[field];
 
-
         switch (currentStep) {
             case 1:
                 return (
                     <View className="p-4">
                         <Text className='font-[Roboto-Mono] text-xl font-bold text-center' style={{ height: 40 }}>
-                            ADD SCC RECORD 🔑
+                            ADD SCC RECORD 📝
                         </Text>
                         <SingleTextField
                             label="SCC Name"
                             placeholder="e.g., St. Francis Xavier SCC"
-                            value={values.sccName} // Corrected from text to value
+                            value={values.sccName}
                             onChangeText={handleChange('sccName')}
                             onBlur={handleBlur('sccName')}
-                            error={hasError('sccName')} // Added error prop
+                            error={hasError('sccName')}
                             keyboardType="default"
                             returnKeyType="next"
                         />
-                         {/* Faith Sharing Name */}
                         <SingleTextField
                             label="Faith Sharing Name"
                             placeholder="e.g., St. Jude"
-                            value={values.faithSharingName} // Corrected from text to value
+                            value={values.faithSharingName}
                             onChangeText={handleChange('faithSharingName')}
                             onBlur={handleBlur('faithSharingName')}
-                            error={hasError('faithSharingName')} // Added error prop
+                            error={hasError('faithSharingName')}
                             keyboardType="default"
                             returnKeyType="next"
                         />
+                        
                         {/* DATE INPUT & PICKER IMPLEMENTATION */}
                         <View style={styles.datePickerContainer}>
                             <Text style={styles.label}>Date of Gathering <Text className="text-red-500">*</Text></Text>
                             
                             <View style={[styles.dateInputWrapper, hasError('date') && styles.dateInputError]}>
-                                {/* TextInput for manual entry */}
                                 <TextInput
                                     style={styles.dateTextInput}
                                     placeholder="YYYY-MM-DD (e.g., 2025-12-31)"
@@ -232,11 +229,10 @@ export default function AddRecord() {
                                     returnKeyType="done"
                                 />
 
-                                {/* Icon to trigger the Date Picker */}
                                 <TouchableOpacity 
                                     onPress={() => {
                                         setShowDatePicker(true);
-                                        setFieldTouched('date', true); // Mark as touched on open
+                                        setFieldTouched('date', true);
                                     }}
                                     activeOpacity={0.8}
                                     style={styles.dateIcon}
@@ -245,13 +241,13 @@ export default function AddRecord() {
                                 </TouchableOpacity>
                             </View>
 
-                             {hasError('date') && (
+                            {hasError('date') && (
                                 <Text style={styles.errorText}>
                                     {errors.date}
                                 </Text>
                             )}
 
-                            {(showDatePicker || Platform.OS === 'ios') && (
+                            {showDatePicker && (
                                 <DateTimePicker
                                     testID="dateTimePicker"
                                     value={getCurrentDate(values.date)}
@@ -261,9 +257,7 @@ export default function AddRecord() {
                                 />
                             )}
                         </View>
-                        {/* END DATE INPUT & PICKER IMPLEMENTATION */}
 
-                        {/* Officiating Priest */}
                         <SingleTextField
                             label="Officiating Priest/Facilitator"
                             placeholder="e.g., Fr. Peter John"
@@ -275,7 +269,6 @@ export default function AddRecord() {
                             returnKeyType="next"
                         />
                         
-                        {/* Host */}
                         <SingleTextField
                             label="Host"
                             placeholder="Name of the person/family that hosted the gathering"
@@ -290,11 +283,8 @@ export default function AddRecord() {
                 );
 
             case 2:
-                // Attendance & Financials 
                 return (
-                    // ... attendance fields ...
                     <View className="p-4">
-                        {/* Men Attendance */}
                         <SingleTextField
                             label="Men Attendance"
                             placeholder="Enter number of men"
@@ -305,48 +295,40 @@ export default function AddRecord() {
                             keyboardType="number-pad"
                             returnKeyType="next"
                         />
-                        {/* Women Attendance */}
                         <SingleTextField
                             label="Women Attendance"
                             placeholder="Enter number of women"
                             value={values.womenAttendance}
-                             // Only allow integers (no decimal)
                             onChangeText={(text) => handleNumericChange('womenAttendance', text)}
                             onBlur={handleBlur('womenAttendance')}
                             error={hasError('womenAttendance')}
                             keyboardType="numeric"
                             returnKeyType="next"
                         />
-                        {/* Youth Attendance */}
                         <SingleTextField
                             label="Youth Attendance"
                             placeholder="Enter number of youth"
                             value={values.youthAttendance}
-                             // Only allow integers (no decimal)
                             onChangeText={(text) => handleNumericChange('youthAttendance', text)}
                             onBlur={handleBlur('youthAttendance')}
                             error={hasError('youthAttendance')}
                             keyboardType="numeric"
                             returnKeyType="next"
                         />
-                        {/* Catechumen Attendance (New Field) */}
                         <SingleTextField
                             label="Catechumen Attendance"
                             placeholder="Enter number of Catechumens"
                             value={values.catechumenAttendance}
-                             // Only allow integers (no decimal)
                             onChangeText={(text) => handleNumericChange('catechumenAttendance', text)}
-                            onBlur={handleBlur('catechumen')}
+                            onBlur={handleBlur('catechumenAttendance')}
                             error={hasError('catechumenAttendance')}
                             keyboardType="numeric"
                             returnKeyType="next"
                         />
-                        {/* Total Offerings */}
                         <SingleTextField
-                            label="Total Offerings (e.g., 500) "
+                            label="Total Offerings (e.g., 500)"
                             placeholder="Total amount collected"
                             value={values.totalOfferings}
-                            // Allow decimal for currency
                             onChangeText={(text) => handleNumericChange('totalOfferings', text, true)} 
                             onBlur={handleBlur('totalOfferings')}
                             error={hasError('totalOfferings')}
@@ -357,11 +339,8 @@ export default function AddRecord() {
                 );
 
             case 3:
-                // Outcomes & Next Steps (Omitted for brevity)
                 return (
-                    // ... outcome fields ...
                     <View className="p-4">
-                        {/* Word of Life */}
                         <SingleTextField
                             label="Word of Life/Theme Verse"
                             placeholder="Enter the main Word of Life or theme of the gathering"
@@ -375,7 +354,6 @@ export default function AddRecord() {
                             returnKeyType="next"
                         />
                         
-                        {/* Task (New Field) */}
                         <SingleTextField
                             label="Task/Outcome"
                             placeholder="What was the main action/task decided?"
@@ -389,7 +367,6 @@ export default function AddRecord() {
                             returnKeyType="next"
                         />
                         
-                        {/* Next Host (New Field) */}
                         <SingleTextField
                             label="Next Host"
                             placeholder="Name of the person/family hosting the next gathering"
@@ -401,16 +378,12 @@ export default function AddRecord() {
                             returnKeyType="done"
                         />
 
-                        {/* Image Picker Section */}
                         <Text style={styles.label}>Upload Photos (Optional)</Text>
                         <CustomButton 
                             title="Select Images" 
                             onPress={() => { /* pickImage logic */ }} 
                             className='bg-orange-500 mb-4'
                         />
-
-                        {/* Image Preview */}
-                        {/* ... preview logic ... */}
                     </View>
                 );
 
@@ -419,13 +392,10 @@ export default function AddRecord() {
         }
     };
 
-
-    // MODIFIED: Correctly set touched state for all fields in the current schema on validation failure
     const handleNext = async () => {
         const stepSchema = validationSchema[currentStep - 1];
         
         try {
-            // Validate the current step's subset of values against its schema
             await stepSchema.validate(values, { abortEarly: false });
             
             if (currentStep < TOTAL_STEPS) {
@@ -435,21 +405,19 @@ export default function AddRecord() {
         } catch (err: any) {
             Alert.alert("Validation Error", "Please correct the errors on this page before continuing.");
             
-            // This is the fix: create a new touched object with all error fields marked true
             const newTouched: { [key: string]: boolean } = {};
-            if (err.inner) { // Yup validation error structure
+            if (err.inner) {
                 err.inner.forEach((error: any) => { 
                     if (error.path) {
                         newTouched[error.path] = true;
                     }
                 });
-            } else if (err.fields) { // Fallback for older Yup error structure
+            } else if (err.fields) {
                 Object.keys(err.fields).forEach(key => { 
                     newTouched[key] = true;
                 });
             }
             
-            // Merge with existing touched state to preserve previously touched fields
             setTouched({ ...touched, ...newTouched }); 
         }
     };
@@ -461,8 +429,6 @@ export default function AddRecord() {
         }
     }
 
-
-    // The main component render (Unchanged)
     return (
         <KeyboardAvoidingView 
             style={{ flex: 1 }} 
@@ -478,7 +444,6 @@ export default function AddRecord() {
             >
                 {renderStepContent()} 
                 
-                {/* Navigation Buttons */}
                 <View className="p-4 pt-0">
                     <View className="flex-row justify-between mt-4">
                         {currentStep > 1 && (
@@ -495,11 +460,11 @@ export default function AddRecord() {
                         {currentStep === TOTAL_STEPS && (
                             <CustomButton
                                 title="Add Record"
-                                onPress={handleSubmit} 
+                                onPress={formik.handleSubmit}
                                 isLoading={addRecordMutation.isPending} 
                                 className='flex-1 bg-green-500' 
                             />
-                        )}
+                        )}             
                     </View>
                 </View>
             </ScrollView>
@@ -507,13 +472,11 @@ export default function AddRecord() {
     );
 }
 
-// Keeping a minimal StyleSheet for fixed dimensions for the image preview and new Date Picker styles
 const styles = StyleSheet.create({
     imagePreview: {
         width: 100, 
         height: 100,
     },
-    // NEW STYLES for Date Picker
     datePickerContainer: {
         marginBottom: 16,
     },
@@ -523,28 +486,27 @@ const styles = StyleSheet.create({
         marginBottom: 8,
         fontWeight: '500',
     },
-    // The wrapper style is the new boundary/border for the combined input/icon
     dateInputWrapper: { 
         flexDirection: 'row',
         alignItems: 'center',
         borderRadius: 8,
-        borderColor: '#D1D5DB', // light gray
+        borderColor: '#D1D5DB',
         borderWidth: 1,
-        backgroundColor: '#F9FAFB', // very light gray
-        paddingHorizontal: 8, // Adjust padding
+        backgroundColor: '#F9FAFB',
+        paddingHorizontal: 8,
     },
-    dateTextInput: { // Style for the text input itself
-        flex: 1, // Takes up most of the space
+    dateTextInput: {
+        flex: 1,
         fontSize: 16,
         color: '#1F2937',
         paddingVertical: 12,
-        paddingHorizontal: 8, // Remove the horizontal padding handled by the wrapper
+        paddingHorizontal: 8,
     },
     dateIcon: {
-        padding: 8, // Padding around the icon for easy tapping
+        padding: 8,
     },
     dateInputError: {
-        borderColor: '#EF4444', // red
+        borderColor: '#EF4444',
     },
     errorText: {
         fontSize: 12,
