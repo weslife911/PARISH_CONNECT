@@ -1,7 +1,7 @@
 import { useAuthStore } from "@/store/useAuthStore";
 import { useQuery } from "@tanstack/react-query";
 
-export const UseCheckAuthQuery = () => {
+export const useCheckAuthQuery = () => {
     const { checkAuth } = useAuthStore();
 
     return useQuery({

@@ -49,3 +49,55 @@ export const addSCCRecord = async(req: Request, res: Response) => {
         });
     }
 }
+
+export const getSCCRecords = async(req: Request, res: Response) => {
+    try {
+
+        const records = await SCC.find({});
+
+        if(!records) return res.json({
+            success: false,
+            message: "No SCC Records found"
+        });
+
+        return res.status(200).json({
+            success: true,
+            records
+        });
+
+    } catch (e: any) {
+        console.error("Getting SCC Records error:", e);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: e instanceof Error ? e.message : "An unknown error occurred"
+        });
+    }
+}
+
+export const getSCCRecord = async(req: Request, res: Response) => {
+    try {
+
+        const { id } = req.params;
+
+        const record = await SCC.findById(id);
+
+        if(!record) return res.json({
+            success: false,
+            message: "Record with given ID does not exist!"
+        })
+
+        return res.status(200).json({
+            success: true,
+            record
+        });
+
+    } catch (e: any) {
+        console.error("Getting SCC Record error:", e);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: e instanceof Error ? e.message : "An unknown error occurred"
+        });
+    }
+}

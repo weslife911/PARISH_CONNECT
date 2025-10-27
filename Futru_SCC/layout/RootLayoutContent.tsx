@@ -7,13 +7,15 @@ import CustomHeader from "@/components/Common/CustomHeader";
 import Loader from "@/components/Loader/Loader";
 // import { GestureHandlerRootView } from 'react-native-gesture-handler'; // REMOVED
 import { useEffect } from "react";
-import { UseCheckAuthQuery } from "@/services/Auth/queries";
+import { useCheckAuthQuery } from "@/services/Auth/queries";
+import { useGetSCCRecordsQuery } from "@/services/SCC/queries";
 
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutContent() {
 
-    const checkAuth = UseCheckAuthQuery();
+    const checkAuth = useCheckAuthQuery();
+    const sccGetRecordsQuery = useGetSCCRecordsQuery();
 
     const [fontsLoaded] = useFonts({
         "Roboto-Mono": require("../assets/fonts/RobotoMono-Bold.ttf")
@@ -25,7 +27,7 @@ function RootLayoutContent() {
         }
     }, [fontsLoaded]);
 
-    const isLoading = !fontsLoaded || checkAuth.isPending;
+    const isLoading = !fontsLoaded || checkAuth.isPending || sccGetRecordsQuery.isPending;
 
     if (isLoading) {
         return (

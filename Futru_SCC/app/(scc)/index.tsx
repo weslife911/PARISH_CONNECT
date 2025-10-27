@@ -1,3 +1,5 @@
+// index.tsx
+
 import React from 'react';
 import {
     Text, 
@@ -5,35 +7,32 @@ import {
     TouchableOpacity,
     Image, 
     FlatList,
-    StyleSheet // <--- NEW: Import StyleSheet for FAB styling
+    StyleSheet
 } from 'react-native';
 import { useRouter } from "expo-router"
 import NoRecords from '@/components/SCC/NoRecords';
 import { Cross } from 'lucide-react-native';
+import { useGetSCCRecordsQuery } from '@/services/SCC/queries';
+// IMPORT THE NEW SCCRecord TYPE
+import { SCCRecord } from '@/types/sccTypes'; 
 
-// Centralized the static data definition
-const RECORD_DATA = [
-    // {
-    //     id: "1",
-    //     SCC: 'St. Thomas Aquinas',
-    //     title: 'January',
-    //     date: '01/01/2025'
-    // },
-    // {
-    //     id: "2",
-    //     SCC: 'St. Thomas Aquinas',
-    //     title: 'February',
-    //     date: '02/02/2025'
-    // },
-];
 
-const TransactionItem = ({ SCC, date }: {
+const SCCItem = ({ SCC, date, id }: {
     SCC: string,
-    date: string
+    date: string,
+    // The 'id' prop is explicitly defined as a string here, which is correct
+    id: string 
 }) => {
     const router = useRouter();
+    
+    // MODIFICATION HERE: Use the ID to construct the dynamic route path
+    const handlePress = () => {
+        router.push(`/(scc)/details/${id}`);
+    };
+    
     return (
-        <TouchableOpacity onPress={() => router.push("/(scc)/details")} className="bg-white p-4 flex-row justify-between items-center rounded-xl mb-7 ml-2 mr-2 border-grey">
+        // Call the new handlePress function
+        <TouchableOpacity onPress={handlePress} className="bg-white p-4 flex-row justify-between items-center rounded-xl mb-7 ml-2 mr-2 border-grey">
         <View className="flex-1 mr-4">
             <Text className="text-base text-gray-800 font-medium">{SCC}</Text>
             <Text className="text-xs text-gray-500 mt-1">{date}</Text>
@@ -59,23 +58,28 @@ const SectionHeader = ({ title }: {
 
 
 export default function SCCRecordsPage() {
-    const router = useRouter(); // Use useRouter if the FAB navigates
+    const router = useRouter();
+    const { data } = useGetSCCRecordsQuery();
     
-    // The main container View wraps all screen elements and uses flex: 1
-    // to occupy the full screen space, which is necessary for absolute positioning.
     return (
         <View style={styles.container}>
             <FlatList
-                data={RECORD_DATA}
-                    renderItem={({ item }) => (
-                        <>
-                        <SectionHeader title={item.title}/>
-                    <TransactionItem 
-                        SCC={item.SCC} 
-                        date={item.date}
-                    /></>
+                // Add explicit type to the data for better inference
+                data={data?.records as SCCRecord[] | undefined}
+                // Use SCCRecord type for item
+                renderItem={({ item }: { item: SCCRecord }) => ( 
+                    <>
+                        <SectionHeader title={item.sccName}/>
+                        <SCCItem 
+                            SCC={item.sccName} 
+                            date={item.date}
+                            // TypeScript now knows item._id is a REQUIRED string
+                            id={item._id} 
+                        />
+                    </>
                 )}
-                keyExtractor={(item, index) => item.id + index}
+                // TypeScript now knows item._id is a REQUIRED string
+                keyExtractor={(item: SCCRecord) => item._id} 
                 ListEmptyComponent={<NoRecords/>}
             />
             
@@ -88,10 +92,7 @@ export default function SCCRecordsPage() {
              absolute bottom-6 right-6'
                 onPress={() => router.push('/(scc)/addRecord')} 
             >
-                {/* Placeholder content for the FAB (e.g., a simple plus sign) */}
-                {/* <Text style={styles.fabText}>+</Text> 
-                 */}
-                 <Cross size={24} color="white" />
+                <Cross size={24} color="white" />
             </TouchableOpacity>
             {/* ------------------------------------ */}
             
@@ -99,34 +100,33 @@ export default function SCCRecordsPage() {
     )
 }
 
-// --- NEW STYLESHEET FOR FAB ---
+// ... (rest of the styles object)
 const styles = StyleSheet.create({
     container: {
-        flex: 1, // Ensures the container takes up the full screen
-        backgroundColor: 'white', // Set your desired background color
+        flex: 1, 
+        backgroundColor: 'white', 
     },
     fab: {
-        // Absolute positioning places the FAB relative to the main container
         position: 'absolute', 
         width: 60, 
         height: 60,
         alignItems: 'center',
         justifyContent: 'center',
-        right: 20, // Distance from the right edge
-        bottom: 20, // Distance from the bottom edge
-        backgroundColor: '#007AFF', // Example background color
-        borderRadius: 30, // Makes it a circle
-        elevation: 6, // Android shadow
-        shadowColor: '#000', // iOS shadow
+        right: 20, 
+        bottom: 20, 
+        backgroundColor: '#007AFF', 
+        borderRadius: 30, 
+        elevation: 6, 
+        shadowColor: '#000', 
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.3,
         shadowRadius: 4,
-        zIndex: 10, // Ensures it's drawn on top of the FlatList
+        zIndex: 10, 
     },
     fabText: {
         fontSize: 30,
         color: 'white',
-        lineHeight: 30, // Adjust line height to center the '+' symbol
+        lineHeight: 30, 
     }
 });
 // ------------------------------
