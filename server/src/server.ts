@@ -4,7 +4,6 @@ import { connectToDb } from "./db/connectToDb";
 import AuthRoutes from "./routes/AuthRoutes"
 import SCCRoutes from "./routes/SCCRoutes"
 import cors from "cors"
-import job from "./lib/cron"
 
 config();
 
@@ -36,6 +35,5 @@ const PORT: number = parseInt(process.env.PORT || '8080', 10) || 8080;
 app.listen(PORT, "0.0.0.0", () => {
     connectToDb();
     console.log(`Server is running on port ${PORT}`);
-    job.start();
 })
 
