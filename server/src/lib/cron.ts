@@ -2,6 +2,8 @@ import { config } from "dotenv"
 import cron from "cron"
 import https from "https"
 
+config();
+
 const API_URL = process.env.API_URL;
 
 const job = new cron.CronJob("*/14 * * * *", function() {
