@@ -17,5 +17,4 @@ export const validateSCCRecord = z.object({
     
     task: z.string().min(1, "Task is required"),
     nextHost: z.string().min(1, "Next Host is required"),
-    images: z.array(z.string()).optional()
 })

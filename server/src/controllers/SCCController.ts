@@ -1,6 +1,8 @@
 import SCC from "../models/SCC";
 import { Request, Response } from "express"
 import { validateSCCRecord } from "../validation/SCC/validateSCCRecord";
+import { uploadImage } from "../lib/uploadImage";
+import { UploadedFile } from "express-fileupload";
 
 export const addSCCRecord = async(req: Request, res: Response) => {
     try {
@@ -11,7 +13,23 @@ export const addSCCRecord = async(req: Request, res: Response) => {
             message: validation.error.issues[0]?.message
         });
 
-        const { sccName, faithSharingName, host, date, officiatingPriestName, menAttendance, womenAttendance, youthAttendance, catechumenAttendance, wordOfLife, totalOfferings, task, nextHost, images } = validation.data;
+        const { sccName, faithSharingName, host, date, officiatingPriestName, menAttendance, womenAttendance, youthAttendance, catechumenAttendance, wordOfLife, totalOfferings, task, nextHost } = validation.data;
+        
+        // --- MULTIPLE IMAGE UPLOAD LOGIC ---
+        let imageUrls: string[] = [];
+        // req.files.images holds the file data provided by express-fileupload
+        const files = req.files ? req.files.images : undefined;
+        
+        if (files) {
+            // express-fileupload returns an array if multiple files are uploaded, or a single object if one file.
+            // We ensure it's always an array for uniform processing.
+            const imageArray: UploadedFile[] = Array.isArray(files) ? files : [files as UploadedFile];
+            
+            // Upload images to Cloudinary concurrently using Promise.all
+            const uploadPromises = imageArray.map(uploadImage);
+            imageUrls = await Promise.all(uploadPromises);
+        }
+        // --- END IMAGE UPLOAD LOGIC ---
 
         const record = await SCC.create({
             sccName,
@@ -27,7 +45,7 @@ export const addSCCRecord = async(req: Request, res: Response) => {
             totalOfferings: totalOfferings ?? 0,
             task,
             nextHost,
-            images: images || []
+            images: imageUrls
         });
 
         if(!record) return res.json({

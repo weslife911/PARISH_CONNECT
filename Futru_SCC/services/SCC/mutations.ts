@@ -8,7 +8,7 @@ export const useCreateSCCRecordMutation = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (data: createSCCRecordType) => createRecord(data),
+        mutationFn: (data: createSCCRecordType | FormData) => createRecord(data),
         onSuccess: (data: sccRecordReturnType) => {
             if(data.success) {
                 Toast.show({
