@@ -6,8 +6,8 @@ import {
     ScrollView,
     StyleSheet,
     TouchableOpacity,
-    Image,
-    FlatList,
+    // Image,
+    // FlatList,
     ActivityIndicator, // For loading state
     Alert, // For showing alerts
 } from 'react-native';
@@ -15,13 +15,8 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { useGetSCCRecordQuery } from '@/services/SCC/queries';
 import { SCCRecord } from '@/types/sccTypes';
 
-// --- UPDATED IMPORTS FOR PDF GENERATION ---
-// Using the correct named export 'generatePDF'
-import { generatePDF } from 'react-native-html-to-pdf'; 
-import Share from 'react-native-share';
+import RNHTMLtoPDF from 'react-native-html-to-pdf'; 
 
-// STEP 1: Statically import the local assets here.
-const DUMMY_IMAGE = require('@/assets/images/dummy.png');
 
 // Helper function to format currency
 const formatCurrency = (amount: number) => {
@@ -62,34 +57,34 @@ const AttendanceBlock = ({ men, women, youth, catechumen, total }: { men: number
     </View>
 );
 
-const EventImages = ({ images }: { images: (number | string)[] }) => {
-    if (!images || images.length === 0) {
-        return null;
-    }
-    const renderItem = ({ item }: { item: number | string }) => (
-        <TouchableOpacity className="mr-3 shadow-md rounded-lg overflow-hidden">
-            <Image
-                source={typeof item === 'string' ? { uri: item } : item}
-                style={styles.eventImage}
-                resizeMode="cover"
-            />
-        </TouchableOpacity>
-    );
+// const EventImages = ({ images }: { images: (number | string)[] }) => {
+//     if (!images || images.length === 0) {
+//         return null;
+//     }
+//     const renderItem = ({ item }: { item: number | string }) => (
+//         <TouchableOpacity className="mr-3 shadow-md rounded-lg overflow-hidden">
+//             <Image
+//                 source={typeof item === 'string' ? { uri: item } : item}
+//                 style={styles.eventImage}
+//                 resizeMode="cover"
+//             />
+//         </TouchableOpacity>
+//     );
 
-    return (
-        <View className="mt-6">
-            <Text className="text-lg font-bold text-gray-800 mb-3 mx-4">Event Gallery</Text>
-            <FlatList
-                horizontal
-                data={images}
-                renderItem={renderItem}
-                keyExtractor={(_, index) => `image-${index}`}
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.imageGalleryContainer}
-            />
-        </View>
-    );
-};
+//     return (
+//         <View className="mt-6">
+//             <Text className="text-lg font-bold text-gray-800 mb-3 mx-4">Event Gallery</Text>
+//             <FlatList
+//                 horizontal
+//                 data={images}
+//                 renderItem={renderItem}
+//                 keyExtractor={(_, index) => `image-${index}`}
+//                 showsHorizontalScrollIndicator={false}
+//                 contentContainerStyle={styles.imageGalleryContainer}
+//             />
+//         </View>
+//     );
+// };
 
 
 export default function SCCDetailsPage() {
@@ -133,7 +128,7 @@ export default function SCCDetailsPage() {
     const totalOfferings = record.totalOfferings ?? 0;
     
     // Placeholder image array
-    const dummyImages = [DUMMY_IMAGE, DUMMY_IMAGE];
+    // const dummyImages = [DUMMY_IMAGE, DUMMY_IMAGE];
 
     // --- NEW: PDF GENERATION LOGIC ---
     const generatePdfHtml = (record: SCCRecord, totalAttendance: number, totalOfferings: number) => {
@@ -228,44 +223,40 @@ export default function SCCDetailsPage() {
         `;
     };
 
+    // MODIFIED: Function now only generates the PDF and confirms save location
     const handleGenerateAndSharePdf = async () => {
-        if (isGeneratingPdf || !record) return;
+    if (isGeneratingPdf || !record) return;
 
-        setIsGeneratingPdf(true);
+    setIsGeneratingPdf(true);
 
-        // 1. Generate the HTML content
-        const htmlContent = generatePdfHtml(record, totalAttendance, totalOfferings);
+    // 1. Generate the HTML content
+    const htmlContent = generatePdfHtml(record, totalAttendance, totalOfferings);
 
-        // 2. Configure the PDF options
-        let options = {
-            html: htmlContent,
-            fileName: `${record.sccName.replace(/\s/g, '_')}_Report_${record.date}`,
-            directory: 'Documents', // Use the Documents directory for temp storage
-        };
-
-        try {
-            // 3. Generate the PDF file using the correctly named 'generatePDF' function
-            const file = await generatePDF(options); 
-            
-            // 4. Prepare for Sharing
-            const shareOptions = {
-                title: `${record.sccName} Report`,
-                message: `Sharing the SCC report for ${record.sccName} on ${record.date}.`,
-                url: `file://${file.filePath}`, // Crucial: use the file:// prefix
-                type: 'application/pdf',
-                subject: `${record.sccName} SCC Report`,
-            };
-
-            // 5. Share the PDF
-            await Share.open(shareOptions);
-            
-        } catch (error) {
-            console.error('Error generating or sharing PDF:', error);
-            Alert.alert('Error', 'Failed to generate or share the PDF file. Please check permissions or try again.');
-        } finally {
-            setIsGeneratingPdf(false);
-        }
+    // 2. Configure the PDF options
+    const fileName = `${record.sccName.replace(/\s/g, '_')}_Report_${record.date}`;
+    let options = {
+        html: htmlContent,
+        fileName: fileName,
+        directory: 'Documents', // Use the Documents directory for temp storage
     };
+
+    try {
+        // 3. Generate the PDF file using the imported default export
+        const file = await RNHTMLtoPDF.convert(options); 
+        
+        // 4. Show success message with the file path
+        Alert.alert(
+            'PDF Generated', 
+            `The report PDF has been successfully saved to: ${file.filePath}`
+        );
+        
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        Alert.alert('Error', 'Failed to generate the PDF file. Please check permissions or try again.');
+    } finally {
+        setIsGeneratingPdf(false);
+    }
+};
 
 
     return (
@@ -320,7 +311,7 @@ export default function SCCDetailsPage() {
                 </View>
 
                 {/* Event Images Section */}
-                <EventImages images={dummyImages} /> 
+                {/* <EventImages images={dummyImages} />  */}
 
                 {/* Description/Notes Section and Action Button */}
                 <View className="mt-4 mb-8 mx-4 p-4 bg-white rounded-xl shadow-sm border border-gray-200">
@@ -329,7 +320,7 @@ export default function SCCDetailsPage() {
                         {record.task}
                     </Text>
                 </View>
-                {/* --- TAPPED BUTTON MODIFIED TO CALL PDF GENERATION --- */}
+                {/* --- BUTTON TEXT MODIFIED AND CALLS THE DOWNLOAD-ONLY FUNCTION --- */}
                 <TouchableOpacity 
                     className={`p-4 mx-4 rounded-xl mb-6 ${isGeneratingPdf ? 'bg-indigo-400' : 'bg-indigo-600'}`}
                     onPress={handleGenerateAndSharePdf}
@@ -338,7 +329,7 @@ export default function SCCDetailsPage() {
                     <View className="flex-row justify-center items-center">
                         {isGeneratingPdf && <ActivityIndicator color="#fff" className="mr-2" />}
                         <Text className="text-white text-center text-lg font-semibold">
-                            {isGeneratingPdf ? 'Generating PDF...' : 'Share Event Details (PDF)'}
+                            {isGeneratingPdf ? 'Generating PDF...' : 'Download Event Details (PDF)'}
                         </Text>
                     </View>
                 </TouchableOpacity>
