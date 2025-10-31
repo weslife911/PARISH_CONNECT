@@ -4,13 +4,16 @@
     "slug": "Futru_SCC",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/church.png",
+    "icon": "./assets/images/icon.png",
     "scheme": "futruscc",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.Futru-SCC"
+      "bundleIdentifier": "com.anonymous.Futru-SCC",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {

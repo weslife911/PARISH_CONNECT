@@ -3,15 +3,17 @@ import axios from "axios"
 
 const API_URL = "https://futru-scc-server.onrender.com/api/v1";
 
-export const axiosIntance = axios.create({
+// FIXED: Corrected typo from axiosIntance to axiosInstance
+export const axiosInstance = axios.create({
     baseURL: API_URL,
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
-    }
+    },
+    timeout: 30000, // Add timeout to prevent hanging requests
 });
 
-axiosIntance.interceptors.request.use(
+axiosInstance.interceptors.request.use(
     async (config) => {
         try {
             const token = await AsyncStorage.getItem("auth_token");
@@ -28,7 +30,7 @@ axiosIntance.interceptors.request.use(
     }
 );
 
-axiosIntance.interceptors.response.use(
+axiosInstance.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response) {

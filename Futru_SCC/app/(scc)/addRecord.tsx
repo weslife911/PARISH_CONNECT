@@ -14,39 +14,33 @@ import {
     TextInput
 } from "react-native";
 import { Stack, useRouter } from 'expo-router';
-// --- FORMIK AND YUP IMPORTS ---
 import { useFormik } from 'formik'; 
 import * as yup from 'yup';
-// --- DATE PICKER IMPORTS ---
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'; 
 import { MaterialIcons } from '@expo/vector-icons'; 
-// --- COMPONENT IMPORTS ---
 import SingleTextField from '@/components/Common/SingleTextField'; 
 import CustomButton from '@/components/Common/CustomButton'; 
 import * as ImagePicker from 'expo-image-picker'; 
-// import * as FileSystem from 'expo-file-system'; // REMOVED: No longer need FileSystem
 import { formatDateToISO } from '@/lib/formatDateToISO';
 import { useCreateSCCRecordMutation } from '@/services/SCC/mutations';
-import { sccRecordReturnType } from '@/types/sccTypes'; // ImageUri is now replaced
+import { sccRecordReturnType } from '@/types/sccTypes';
 
-// --- NEW TYPE FOR BASE64 IMAGE ---
 interface Base64Image {
     base64: string;
     mimeType: string;
 }
 type ImageType = Base64Image;
 
-// --- CONSTANTS ---
 const TOTAL_STEPS = 3;
 const MAX_IMAGES = 5;
+// FIXED: Add image size limit (2MB per image)
+const MAX_IMAGE_SIZE_MB = 2;
 
-
-// Initial state for the form
 const initialFormValues = {
     sccName: '',
     faithSharingName: '', 
     host: '',             
-    date: new Date().toISOString().split("T")[0], // The date string will be YYYY-MM-DD
+    date: new Date().toISOString().split("T")[0],
     officiatingPriestName: '', 
     menAttendance: '',      
     womenAttendance: '',    
@@ -56,14 +50,12 @@ const initialFormValues = {
     totalOfferings: '',     
     task: '',             
     nextHost: '',
-    images: [] as ImageType[], // Update images type to use ImageType
+    images: [] as ImageType[],
 };
 
 type FormValues = typeof initialFormValues;
 
-// Validation Schema using Yup
 const validationSchema = [
-    // Step 1 Schema: Details
     yup.object({
         sccName: yup.string().required("SCC Name is required."),
         faithSharingName: yup.string().required("Faith Sharing Name is required."),
@@ -75,7 +67,6 @@ const validationSchema = [
         host: yup.string().required("Host is required."),
     }),
     
-    // Step 2 Schema
     yup.object({
         totalOfferings: yup
             .string()
@@ -87,7 +78,6 @@ const validationSchema = [
         catechumenAttendance: yup.string().matches(/^[0-9]*$/, "Must be a number.").nullable(),
     }),
     
-    // Step 3 Schema
     yup.object({
         wordOfLife: yup.string().required("Word of Life is required.").min(10, "Word of Life should be descriptive (min 10 characters)."), 
         task: yup.string().required("Task/Outcome is required."),
@@ -97,7 +87,6 @@ const validationSchema = [
 
 export default function AddRecord() {
     const [currentStep, setCurrentStep] = useState(1); 
-    // CHANGE: Use Base64Image type
     const [selectedImages, setSelectedImages] = useState<ImageType[]>([]); 
     const [showDatePicker, setShowDatePicker] = useState(false); 
     const scrollViewRef = useRef<ScrollView>(null);
@@ -124,7 +113,14 @@ export default function AddRecord() {
         }
     };
 
-    // MODIFIED: pickImage to request Base64 data
+    // FIXED: Add image size validation
+    const checkImageSize = (base64: string, mimeType: string): boolean => {
+        const base64Length = base64.length;
+        const sizeInBytes = (base64Length * 3) / 4;
+        const sizeInMB = sizeInBytes / (1024 * 1024);
+        return sizeInMB <= MAX_IMAGE_SIZE_MB;
+    };
+
     const pickImage = async () => {
         if (!(await verifyMediaPermissions())) return;
 
@@ -138,18 +134,39 @@ export default function AddRecord() {
                 mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 allowsMultipleSelection: true,
                 selectionLimit: MAX_IMAGES - selectedImages.length,
-                quality: 0.7,
-                base64: true, // KEY CHANGE: Request Base64 encoding
+                quality: 0.5, // FIXED: Reduced quality to 0.5 to reduce size
+                base64: true,
             });
 
             if (!result.canceled && result.assets) {
-                const newImages: ImageType[] = result.assets
-                    .filter(asset => asset.base64) // Only process if base64 is available
-                    .map(asset => ({
-                        base64: asset.base64!,
-                        mimeType: asset.mimeType || 'image/jpeg', 
-                    }));
-                setSelectedImages(prev => [...prev, ...newImages]);
+                const validImages: ImageType[] = [];
+                const invalidImages: string[] = [];
+
+                for (const asset of result.assets) {
+                    if (asset.base64) {
+                        const isValidSize = checkImageSize(asset.base64, asset.mimeType || 'image/jpeg');
+                        
+                        if (isValidSize) {
+                            validImages.push({
+                                base64: asset.base64,
+                                mimeType: asset.mimeType || 'image/jpeg',
+                            });
+                        } else {
+                            invalidImages.push(asset.fileName || 'Unknown');
+                        }
+                    }
+                }
+
+                if (invalidImages.length > 0) {
+                    Alert.alert(
+                        "Images Too Large", 
+                        `${invalidImages.length} image(s) exceeded ${MAX_IMAGE_SIZE_MB}MB and were not added.`
+                    );
+                }
+
+                if (validImages.length > 0) {
+                    setSelectedImages(prev => [...prev, ...validImages]);
+                }
             }
         } catch (error) {
             console.error("Image picker error:", error);
@@ -157,12 +174,10 @@ export default function AddRecord() {
         }
     };
 
-    // MODIFIED: removeImage to filter by Base64 string
     const removeImage = (base64: string) => {
         setSelectedImages(prev => prev.filter(img => img.base64 !== base64));
     };
     
-    // Handler for the final submit button
     async function handleSubmit(values: FormValues) {
         const safeParseInt = (value: string): number | undefined => {
             if (!value || value.trim() === '') return undefined;
@@ -176,7 +191,6 @@ export default function AddRecord() {
             return isNaN(parsed) ? undefined : parsed;
         }
 
-        // CHANGED: Create a JSON payload instead of FormData
         const submissionPayload: { [key: string]: any } = {
             sccName: values.sccName,
             faithSharingName: values.faithSharingName,
@@ -187,40 +201,42 @@ export default function AddRecord() {
             task: values.task,
             nextHost: values.nextHost,
             
-            // Attendance fields
             menAttendance: safeParseInt(values.menAttendance),
             womenAttendance: safeParseInt(values.womenAttendance),
             youthAttendance: safeParseInt(values.youthAttendance),
             catechumenAttendance: safeParseInt(values.catechumenAttendance),
 
-            // Offerings field
             totalOfferings: safeParseFloat(values.totalOfferings),
 
-            // Base64 Images payload
             images: selectedImages.map(image => ({
                 base64: image.base64,
                 mimeType: image.mimeType,
             })),
         };
 
-        // Clean up undefined fields
         Object.keys(submissionPayload).forEach(key => 
             submissionPayload[key] === undefined && delete submissionPayload[key]
         );
         
-        // CHANGED: Pass the JSON object instead of FormData
-        await addRecordMutation.mutate(submissionPayload as any, {
-            onSuccess: (data: sccRecordReturnType) => {
-                if(data.success) {
-                    router.push("/(scc)");
+        // FIXED: Better error handling
+        try {
+            await addRecordMutation.mutateAsync(submissionPayload as any, {
+                onSuccess: (data: sccRecordReturnType) => {
+                    if(data.success) {
+                        router.push("/(scc)");
+                    } else {
+                        Alert.alert("Error", data.message || "Failed to create record");
+                    }
+                },
+                onError: (error: any) => {
+                    console.error("Submission error:", error);
+                    const errorMessage = error?.response?.data?.message || error?.message || "Failed to create record";
+                    Alert.alert("Submission Failed", errorMessage);
                 }
-            },
-            onError: (error) => {
-                console.error("Submission error:", error);
-                // Updated error message
-                Alert.alert("Submission Failed", "There was an error creating the record. Ensure your backend accepts JSON with Base64 image data.");
-            }
-        });
+            });
+        } catch (error) {
+            console.error("Submission error:", error);
+        }
     }
 
     const formik = useFormik<FormValues>({
@@ -241,16 +257,20 @@ export default function AddRecord() {
         setTouched
     } = formik;
 
-    // Date Picker Handlers
     const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
         if (Platform.OS === 'android') {
             setShowDatePicker(false);
         }
 
         if (event.type === 'set' && selectedDate) {
-            const formattedDate = formatDateToISO(selectedDate);
-            setFieldValue('date', formattedDate);
-            setFieldTouched('date', true);
+            try {
+                const formattedDate = formatDateToISO(selectedDate);
+                setFieldValue('date', formattedDate);
+                setFieldTouched('date', true);
+            } catch (error) {
+                console.error("Date formatting error:", error);
+                Alert.alert("Error", "Failed to format date");
+            }
         } 
         
         if (Platform.OS === 'ios' && event.type !== 'set') {
@@ -258,13 +278,16 @@ export default function AddRecord() {
         }
     };
 
-    // Helper to determine the date object for the picker value
     const getCurrentDate = (dateValue: string): Date => {
          if (!dateValue) return new Date();
-         return new Date(`${dateValue}T00:00:00.000Z`);
+         try {
+             return new Date(`${dateValue}T00:00:00.000Z`);
+         } catch (error) {
+             console.error("Date parsing error:", error);
+             return new Date();
+         }
     };
 
-    // Function to render the fields for the current step
     const renderStepContent = () => {
         const handleNumericChange = (field: keyof FormValues, text: string, isDecimal: boolean = false) => {
             const cleanText = isDecimal ? text.replace(/[^0-9.]/g, '') : text.replace(/[^0-9]/g, '');
@@ -301,7 +324,6 @@ export default function AddRecord() {
                             returnKeyType="next"
                         />
                         
-                        {/* DATE INPUT & PICKER IMPLEMENTATION */}
                         <View style={styles.datePickerContainer}>
                             <Text style={styles.label}>Date of Gathering <Text className="text-red-500">*</Text></Text>
                             
@@ -467,7 +489,7 @@ export default function AddRecord() {
                             returnKeyType="done"
                         />
 
-                        <Text style={styles.label}>Upload Photos (Optional)</Text>
+                        <Text style={styles.label}>Upload Photos (Optional - Max {MAX_IMAGE_SIZE_MB}MB each)</Text>
                         <CustomButton 
                             title="Select Images" 
                             onPress={pickImage} 
@@ -476,15 +498,14 @@ export default function AddRecord() {
 
                         {selectedImages.length > 0 && (
                             <View className="flex-row flex-wrap mb-4">
-                                {selectedImages.map((image) => (
-                                    <View key={image.base64.substring(0, 10) + image.base64.length} style={styles.imagePreviewContainer}>
-                                        {/* CHANGE: Use data URI for Base64 image display */}
+                                {selectedImages.map((image, index) => (
+                                    <View key={`${image.base64.substring(0, 10)}-${index}`} style={styles.imagePreviewContainer}>
                                         <Image 
                                             source={{ uri: `data:${image.mimeType};base64,${image.base64}` }} 
                                             style={styles.imagePreview} 
                                         />
                                         <TouchableOpacity 
-                                            onPress={() => removeImage(image.base64)} // CHANGE: Pass base64 for removal
+                                            onPress={() => removeImage(image.base64)}
                                             style={styles.removeImageButton}
                                         >
                                             <MaterialIcons name="cancel" size={24} color="#EF4444" />

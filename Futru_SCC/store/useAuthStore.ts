@@ -1,6 +1,6 @@
 import { create } from "zustand"
 import { AuthReturnType, LoginUserType, SignupUserType, useAuthStoreType } from "@/types/authTypes"
-import { axiosIntance } from "@/lib/axios";
+import { axiosInstance } from "@/lib/axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const AUTH_TOKEN_KEY = "auth_token";
@@ -10,7 +10,7 @@ export const useAuthStore = create<useAuthStoreType>((set, get) => ({
 
     loginUser: async(data: LoginUserType): Promise<AuthReturnType> => {
         try {
-            const response = await axiosIntance.post("/login", data);
+            const response = await axiosInstance.post("/login", data);
             const authData: AuthReturnType = response.data;
 
             if (authData.success && authData.token) {
@@ -35,7 +35,7 @@ export const useAuthStore = create<useAuthStoreType>((set, get) => ({
     
     signupUser: async(data: SignupUserType): Promise<AuthReturnType> => {
         try {
-            const response = await axiosIntance.post("/signup", data);
+            const response = await axiosInstance.post("/signup", data);
             const authData: AuthReturnType = response.data;
             if (authData.success && authData.token) {
                 await AsyncStorage.setItem(AUTH_TOKEN_KEY, authData.token);
@@ -66,7 +66,7 @@ export const useAuthStore = create<useAuthStoreType>((set, get) => ({
         }
 
         try {
-            const response = await axiosIntance.get("/check", {
+            const response = await axiosInstance.get("/check", {
                 headers: {
                     Authorization: `Bearer ${auth_token}`
                 }

@@ -4,8 +4,9 @@ import { View, Text, TextInput, TextInputProps, TouchableOpacity } from "react-n
 import { Eye, EyeOff } from "lucide-react-native"
 
 interface SingleTextFieldProps {
-    label: string;
-    value: string; // Changed to 'value' for consistency with Formik's values object
+    label?: string;
+    value?: string;
+    text?: string; // Support legacy prop name
     onChangeText?: (text: string) => void;
     placeholder?: string;
     keyboardType?: TextInputProps['keyboardType'];
@@ -16,14 +17,14 @@ interface SingleTextFieldProps {
     onToggleVisibility?: () => void; 
     multiline?: boolean; 
     numberOfLines?: number; 
-    // ADDED: Prop for error message
     error?: string | false | undefined | null; 
-    returnKeyType?: TextInputProps['returnKeyType']; // Added missing returnKeyType
+    returnKeyType?: TextInputProps['returnKeyType'];
 }
 
 function SingleTextField({ 
-    label, 
-    value, // Changed from text to value
+    label = '', 
+    value, 
+    text, // Legacy support
     onChangeText,
     placeholder, 
     keyboardType = 'default', 
@@ -34,26 +35,26 @@ function SingleTextField({
     onToggleVisibility,
     multiline = false,
     numberOfLines = 1,
-    error, // Destructure the new error prop
-    returnKeyType = 'default', // Default for new prop
+    error,
+    returnKeyType = 'default',
 }: SingleTextFieldProps) {
   
-  // Disable the toggle icon for multiline inputs
+  // Support both 'value' and 'text' props for backward compatibility
+  const textValue = value ?? text ?? '';
+  
   const shouldRenderToggle = showFieldData && onToggleVisibility && !multiline; 
   const inputPaddingRight = shouldRenderToggle ? 'pr-12' : 'pr-4';
   
-  // Conditionally apply style for multiline to ensure vertical alignment and adequate height
   const multilineStyles = multiline 
-    ? { minHeight: 120, textAlignVertical: 'top', paddingTop: 16 }
+    ? { minHeight: 120, textAlignVertical: 'top' as const, paddingTop: 16 }
     : {};
   
-  // Apply error styling
-  const errorBorderClass = error ? 'border-red-500' : 'border-gray-300'; // Changed from gray-700 to gray-300 for better contrast/modern look
+  const errorBorderClass = error ? 'border-red-500' : 'border-gray-300';
 
   const inputBaseClasses = `
     w-full 
     border 
-    ${errorBorderClass} // Dynamic error border
+    ${errorBorderClass}
     rounded-lg 
     py-4 
     ${inputPaddingRight} 
@@ -66,38 +67,39 @@ function SingleTextField({
   const IconComponent = secureTextEntry ? Eye : EyeOff;
 
   return (
-    // Use marginBottom to account for error message space
-    <View className="relative w-full mb-6 mt-4"> 
+    <View className="relative w-full mb-4 mt-4"> 
         
       {/* Floating Label */}
-      <View 
-        className="
-          absolute 
-          -top-3 
-          left-3 
-          bg-white 
-          px-2 
-          rounded 
-          z-10
-        "
-      >
-        <Text className="text-black text-xs font-bold">{label}</Text>
-      </View>
+      {label && (
+        <View 
+          className="
+            absolute 
+            -top-3 
+            left-3 
+            bg-white 
+            px-2 
+            rounded 
+            z-10
+          "
+        >
+          <Text className="text-black text-xs font-bold">{label}</Text>
+        </View>
+      )}
 
       {/* TextInput */}
       <TextInput
-        value={value} // Use value
+        value={textValue}
         onChangeText={onChangeText}
         onBlur={onBlur}
         placeholder={placeholder}
         className={`${inputBaseClasses} ${className || ''}`}
-        keyboardType={keyboardType as TextInputProps['keyboardType']} 
+        keyboardType={keyboardType} 
         placeholderTextColor="#6B7280"
-        secureTextEntry={secureTextEntry || false}
+        secureTextEntry={secureTextEntry}
         multiline={multiline}
         numberOfLines={numberOfLines}
-        style={multilineStyles} // Apply multiline specific styles
-        returnKeyType={returnKeyType} // Use returnKeyType
+        style={multilineStyles}
+        returnKeyType={returnKeyType}
       />
       
       {/* Visibility Toggle Icon */}
@@ -112,15 +114,15 @@ function SingleTextField({
             justify-center 
             h-full
           "
+          style={{ height: '100%' }}
         >
-          {/* Render the appropriate Lucide icon component */}
           <IconComponent size={24} color="#6B7280" /> 
         </TouchableOpacity>
       )}
 
-      {/* ADDED: Error Text Display */}
-      {error && (
-        <Text className="text-red-500 text-xs mt-1 absolute bottom-[-16] left-4">
+      {/* Error Text Display */}
+      {error && typeof error === 'string' && (
+        <Text className="text-red-500 text-xs mt-1 ml-1">
           {error}
         </Text>
       )}
