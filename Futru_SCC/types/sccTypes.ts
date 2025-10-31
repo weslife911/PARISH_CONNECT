@@ -1,5 +1,10 @@
 // sccTypes.ts
 
+export type ImageUri = {
+    uri: string;
+    mimeType?: string;
+};
+
 export type createSCCRecordType = {
     _id?: string,
     sccName: string,
@@ -15,7 +20,7 @@ export type createSCCRecordType = {
     totalOfferings?: number,
     task: string,
     nextHost: string,
-    images?: string[],
+    images?: ImageUri[],
     createdAt?: string,
     updatedAt?: string
 }
