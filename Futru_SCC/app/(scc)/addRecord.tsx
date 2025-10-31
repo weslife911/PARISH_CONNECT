@@ -24,7 +24,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import SingleTextField from '@/components/Common/SingleTextField'; 
 import CustomButton from '@/components/Common/CustomButton'; 
 import * as ImagePicker from 'expo-image-picker'; 
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system'; // Used for Base64 conversion
 import * as MediaLibrary from 'expo-media-library';
 import { formatDateToISO } from '@/lib/formatDateToISO';
 import { useCreateSCCRecordMutation } from '@/services/SCC/mutations';
@@ -164,21 +164,28 @@ export default function AddRecord() {
             return isNaN(parsed) ? undefined : parsed;
         }
 
-        const formData = new FormData();
+        // --- START: MODIFIED IMAGE PROCESSING AND PAYLOAD CONSTRUCTION ---
 
-        selectedImages.forEach((image, index) => {
-            const fileName = image.uri.split('/').pop() || `image-${index}.jpg`; 
-            
-            formData.append('images', {
-                uri: image.uri,
-                type: image.mimeType || 'image/jpeg', 
-                name: fileName,
-            } as any);
-        });
+        const base64Images: string[] = [];
 
-        console.log(values, selectedImages);
-
-        await addRecordMutation.mutate({
+        for (const image of selectedImages) {
+            try {
+                // Read the local file as a Base64 string
+                const base64 = await FileSystem.readAsStringAsync(image.uri, {
+                    encoding: FileSystem.EncodingType.Base64,
+                });
+                
+                // Construct the Data URI format required by Cloudinary
+                const dataUri = `data:${image.mimeType || 'image/jpeg'};base64,${base64}`;
+                base64Images.push(dataUri);
+            } catch (error) {
+                console.error("Failed to convert image to Base64:", error);
+                Alert.alert("Image Error", `Could not process image: ${image.uri}`);
+                return; // Stop submission if one image fails
+            }
+        }
+        
+        const payload = {
             sccName: values.sccName,
             faithSharingName: values.faithSharingName,
             host: values.host,
@@ -192,14 +199,21 @@ export default function AddRecord() {
             totalOfferings: safeParseFloat(values.totalOfferings), 
             task: values.task,
             nextHost: values.nextHost,
-            images: selectedImages || []
-        }, {
+            images: base64Images // Send Base64 strings instead of ImageUri objects
+        };
+
+        await addRecordMutation.mutate(payload as any, { // Pass JSON payload
             onSuccess: (data: sccRecordReturnType) => {
                 if(data.success) {
                     router.push("/(scc)");
                 }
+            },
+            onError: (error) => {
+                console.error("Submission error:", error);
+                Alert.alert("Submission Failed", "There was an error creating the record.");
             }
         })
+        // --- END: MODIFIED IMAGE PROCESSING AND PAYLOAD CONSTRUCTION ---
     }
 
     const formik = useFormik<FormValues>({
