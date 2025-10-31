@@ -11,34 +11,34 @@ const sccSchema = new Schema({
     },
     host: {
         type: String,
-        required: true  // Add required since it's required on frontend
+        required: true
     },
     date: {
         type: String,
-        required: true  // Add required since it's required on frontend
+        required: true
     },
     officiatingPriestName: {
         type: String,
-        required: true  // Add required since it's required on frontend
+        required: true
     },
     menAttendance: {
         type: Number,
-        required: false,  // Changed to false
+        required: false,
         default: 0
     },
     womenAttendance: {
         type: Number,
-        required: false,  // Changed to false
+        required: false,
         default: 0
     },
     youthAttendance: {
         type: Number,
-        required: false,  // Changed to false
+        required: false,
         default: 0
     },
     catechumenAttendance: {
         type: Number,
-        required: false,  // Changed to false
+        required: false,
         default: 0
     },
     wordOfLife: {
@@ -47,17 +47,21 @@ const sccSchema = new Schema({
     },
     totalOfferings: {
         type: Number,
-        required: false,  // Changed to false
+        required: false,
         default: 0
     },
     task: {
         type: String,
-        required: true  // Add required since it's required on frontend
+        required: true
     },
     nextHost: {
         type: String,
-        required: true  // Add required since it's required on frontend
+        required: true
     },
+    images: {
+        type: [String],
+        default: []
+    }
 }, { timestamps: true });
 
 const SCC = model("SCC", sccSchema);

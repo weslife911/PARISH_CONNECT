@@ -24,11 +24,17 @@ import { MaterialIcons } from '@expo/vector-icons';
 import SingleTextField from '@/components/Common/SingleTextField'; 
 import CustomButton from '@/components/Common/CustomButton'; 
 import * as ImagePicker from 'expo-image-picker'; 
-import * as FileSystem from 'expo-file-system'; // Used for Base64 conversion
-import * as MediaLibrary from 'expo-media-library';
+// import * as FileSystem from 'expo-file-system'; // REMOVED: No longer need FileSystem
 import { formatDateToISO } from '@/lib/formatDateToISO';
 import { useCreateSCCRecordMutation } from '@/services/SCC/mutations';
-import { ImageUri, sccRecordReturnType } from '@/types/sccTypes';
+import { sccRecordReturnType } from '@/types/sccTypes'; // ImageUri is now replaced
+
+// --- NEW TYPE FOR BASE64 IMAGE ---
+interface Base64Image {
+    base64: string;
+    mimeType: string;
+}
+type ImageType = Base64Image;
 
 // --- CONSTANTS ---
 const TOTAL_STEPS = 3;
@@ -50,7 +56,7 @@ const initialFormValues = {
     totalOfferings: '',     
     task: '',             
     nextHost: '',
-    images: [],
+    images: [] as ImageType[], // Update images type to use ImageType
 };
 
 type FormValues = typeof initialFormValues;
@@ -91,7 +97,8 @@ const validationSchema = [
 
 export default function AddRecord() {
     const [currentStep, setCurrentStep] = useState(1); 
-    const [selectedImages, setSelectedImages] = useState<ImageUri[]>([]); 
+    // CHANGE: Use Base64Image type
+    const [selectedImages, setSelectedImages] = useState<ImageType[]>([]); 
     const [showDatePicker, setShowDatePicker] = useState(false); 
     const scrollViewRef = useRef<ScrollView>(null);
     const router = useRouter();
@@ -117,6 +124,7 @@ export default function AddRecord() {
         }
     };
 
+    // MODIFIED: pickImage to request Base64 data
     const pickImage = async () => {
         if (!(await verifyMediaPermissions())) return;
 
@@ -131,13 +139,16 @@ export default function AddRecord() {
                 allowsMultipleSelection: true,
                 selectionLimit: MAX_IMAGES - selectedImages.length,
                 quality: 0.7,
+                base64: true, // KEY CHANGE: Request Base64 encoding
             });
 
             if (!result.canceled && result.assets) {
-                const newImages: ImageUri[] = result.assets.map(asset => ({
-                    uri: asset.uri,
-                    mimeType: asset.mimeType || 'image/jpeg', 
-                }));
+                const newImages: ImageType[] = result.assets
+                    .filter(asset => asset.base64) // Only process if base64 is available
+                    .map(asset => ({
+                        base64: asset.base64!,
+                        mimeType: asset.mimeType || 'image/jpeg', 
+                    }));
                 setSelectedImages(prev => [...prev, ...newImages]);
             }
         } catch (error) {
@@ -146,8 +157,9 @@ export default function AddRecord() {
         }
     };
 
-    const removeImage = (uri: string) => {
-        setSelectedImages(prev => prev.filter(img => img.uri !== uri));
+    // MODIFIED: removeImage to filter by Base64 string
+    const removeImage = (base64: string) => {
+        setSelectedImages(prev => prev.filter(img => img.base64 !== base64));
     };
     
     // Handler for the final submit button
@@ -164,45 +176,40 @@ export default function AddRecord() {
             return isNaN(parsed) ? undefined : parsed;
         }
 
-        // --- START: MODIFIED IMAGE PROCESSING AND PAYLOAD CONSTRUCTION ---
-
-        const base64Images: string[] = [];
-
-        for (const image of selectedImages) {
-            try {
-                // Read the local file as a Base64 string
-                const base64 = await FileSystem.readAsStringAsync(image.uri, {
-                    encoding: FileSystem.EncodingType.Base64,
-                });
-                
-                // Construct the Data URI format required by Cloudinary
-                const dataUri = `data:${image.mimeType || 'image/jpeg'};base64,${base64}`;
-                base64Images.push(dataUri);
-            } catch (error) {
-                console.error("Failed to convert image to Base64:", error);
-                Alert.alert("Image Error", `Could not process image: ${image.uri}`);
-                return; // Stop submission if one image fails
-            }
-        }
-        
-        const payload = {
+        // CHANGED: Create a JSON payload instead of FormData
+        const submissionPayload: { [key: string]: any } = {
             sccName: values.sccName,
             faithSharingName: values.faithSharingName,
             host: values.host,
             date: values.date,
             officiatingPriestName: values.officiatingPriestName,
+            wordOfLife: values.wordOfLife,
+            task: values.task,
+            nextHost: values.nextHost,
+            
+            // Attendance fields
             menAttendance: safeParseInt(values.menAttendance),
             womenAttendance: safeParseInt(values.womenAttendance),
             youthAttendance: safeParseInt(values.youthAttendance),
             catechumenAttendance: safeParseInt(values.catechumenAttendance),
-            wordOfLife: values.wordOfLife,
-            totalOfferings: safeParseFloat(values.totalOfferings), 
-            task: values.task,
-            nextHost: values.nextHost,
-            images: base64Images // Send Base64 strings instead of ImageUri objects
+
+            // Offerings field
+            totalOfferings: safeParseFloat(values.totalOfferings),
+
+            // Base64 Images payload
+            images: selectedImages.map(image => ({
+                base64: image.base64,
+                mimeType: image.mimeType,
+            })),
         };
 
-        await addRecordMutation.mutate(payload as any, { // Pass JSON payload
+        // Clean up undefined fields
+        Object.keys(submissionPayload).forEach(key => 
+            submissionPayload[key] === undefined && delete submissionPayload[key]
+        );
+        
+        // CHANGED: Pass the JSON object instead of FormData
+        await addRecordMutation.mutate(submissionPayload as any, {
             onSuccess: (data: sccRecordReturnType) => {
                 if(data.success) {
                     router.push("/(scc)");
@@ -210,10 +217,10 @@ export default function AddRecord() {
             },
             onError: (error) => {
                 console.error("Submission error:", error);
-                Alert.alert("Submission Failed", "There was an error creating the record.");
+                // Updated error message
+                Alert.alert("Submission Failed", "There was an error creating the record. Ensure your backend accepts JSON with Base64 image data.");
             }
-        })
-        // --- END: MODIFIED IMAGE PROCESSING AND PAYLOAD CONSTRUCTION ---
+        });
     }
 
     const formik = useFormik<FormValues>({
@@ -470,10 +477,14 @@ export default function AddRecord() {
                         {selectedImages.length > 0 && (
                             <View className="flex-row flex-wrap mb-4">
                                 {selectedImages.map((image) => (
-                                    <View key={image.uri} style={styles.imagePreviewContainer}>
-                                        <Image source={{ uri: image.uri }} style={styles.imagePreview} />
+                                    <View key={image.base64.substring(0, 10) + image.base64.length} style={styles.imagePreviewContainer}>
+                                        {/* CHANGE: Use data URI for Base64 image display */}
+                                        <Image 
+                                            source={{ uri: `data:${image.mimeType};base64,${image.base64}` }} 
+                                            style={styles.imagePreview} 
+                                        />
                                         <TouchableOpacity 
-                                            onPress={() => removeImage(image.uri)} 
+                                            onPress={() => removeImage(image.base64)} // CHANGE: Pass base64 for removal
                                             style={styles.removeImageButton}
                                         >
                                             <MaterialIcons name="cancel" size={24} color="#EF4444" />

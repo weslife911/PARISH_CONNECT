@@ -4,7 +4,7 @@
     "slug": "Futru_SCC",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/church.png",
     "scheme": "futruscc",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,

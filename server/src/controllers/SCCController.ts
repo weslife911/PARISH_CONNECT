@@ -1,12 +1,24 @@
+// SCCController.ts
+
 import SCC from "../models/SCC";
 import { Request, Response } from "express"
 import { validateSCCRecord } from "../validation/SCC/validateSCCRecord";
-import { UploadedFile } from "express-fileupload";
+// --- REMOVED: express-fileupload imports ---
+// import { UploadedFile, FileArray } from "express-fileupload"; 
 import cloudinary from "../config/cloudinary";
+
+// Define the structure of the incoming Base64 image data
+interface Base64ImagePayload {
+    base64: string;
+    mimeType: string;
+}
 
 export const addSCCRecord = async(req: Request, res: Response) => {
     try {
         
+        // Extract the Base64 images array from the JSON request body
+        const images: Base64ImagePayload[] | undefined = req.body.images;
+
         const transformedBody = {
             ...req.body,
             menAttendance: req.body.menAttendance ? Number(req.body.menAttendance) : undefined,
@@ -27,25 +39,24 @@ export const addSCCRecord = async(req: Request, res: Response) => {
 
         const { sccName, faithSharingName, host, date, officiatingPriestName, menAttendance, womenAttendance, youthAttendance, catechumenAttendance, wordOfLife, totalOfferings, task, nextHost } = validation.data;
         
-        // --- 2. IMAGE UPLOAD LOGIC ---
+        // --- 2. IMAGE UPLOAD LOGIC (MODIFIED for Base64) ---
         let imageUrls: string[] = [];
-        // req.files.images holds the file data provided by express-fileupload
-        const files = req.files ? req.files.images : undefined;
         
-        if (files) {
-            // Ensure files is an array for uniform processing
-            const imageArray: UploadedFile[] = Array.isArray(files) ? files : [files as UploadedFile];
+        if (images && images.length > 0) {
             
-            // Function to upload a single file to Cloudinary
-            const uploadFileToCloudinary = async (file: UploadedFile): Promise<string> => {
-                const result = await cloudinary.uploader.upload(file.tempFilePath, {
+            // Function to upload a single Base64 string to Cloudinary
+            const uploadBase64ToCloudinary = async (image: Base64ImagePayload): Promise<string> => {
+                // Cloudinary accepts a data URI string: data:[<Mime-type>][;base64],<data>
+                const dataUri = `data:${image.mimeType};base64,${image.base64}`;
+                
+                const result = await cloudinary.uploader.upload(dataUri, {
                     folder: "scc-records" // Folder for organization in Cloudinary
                 });
                 return result.secure_url;
             };
 
             // Upload images to Cloudinary concurrently using Promise.all
-            const uploadPromises = imageArray.map(uploadFileToCloudinary);
+            const uploadPromises = images.map(uploadBase64ToCloudinary);
             imageUrls = await Promise.all(uploadPromises);
         }
         

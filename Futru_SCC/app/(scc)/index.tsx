@@ -16,6 +16,62 @@ import { useGetSCCRecordsQuery } from '@/services/SCC/queries';
 // IMPORT THE NEW SCCRecord TYPE
 import { SCCRecord } from '@/types/sccTypes'; 
 
+// --- UTILITY FUNCTION FOR GROUPING ---
+/**
+ * Groups SCC records by Month and Year (e.g., "January 2024") and sorts them descending by date.
+ * @param records Array of SCCRecord objects.
+ * @returns Array of grouped sections.
+ */
+interface GroupedSection {
+    title: string; // e.g., "January 2024"
+    data: SCCRecord[];
+}
+
+const groupAndSortRecords = (records: SCCRecord[] | undefined): GroupedSection[] => {
+    if (!records || records.length === 0) {
+        return [];
+    }
+    
+    // 1. Sort records by date descending (most recent first)
+    const sortedRecords = [...records].sort((a, b) => {
+        // Assuming date is in 'YYYY-MM-DD' format
+        if (a.date < b.date) return 1;
+        if (a.date > b.date) return -1;
+        return 0;
+    });
+
+    // 2. Group records by month/year
+    const grouped: { [key: string]: SCCRecord[] } = {};
+
+    sortedRecords.forEach(record => {
+        // Extract YYYY-MM
+        const yearMonth = record.date.substring(0, 7); 
+        
+        // Format the title (e.g., "2024-01" -> "January 2024")
+        const [year, month] = yearMonth.split('-');
+        const dateObj = new Date(parseInt(year), parseInt(month) - 1, 1);
+        const monthTitle = dateObj.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+        if (!grouped[monthTitle]) {
+            grouped[monthTitle] = [];
+        }
+        grouped[monthTitle].push(record);
+    });
+
+    // 3. Convert the grouped object into the final array structure
+    // We sort the final groups by the key (Month Year) descending to ensure proper chronology
+    return Object.keys(grouped).sort((a, b) => {
+        // Simple string comparison for sorting the month/year title descending
+        if (a < b) return 1;
+        if (a > b) return -1;
+        return 0;
+    }).map(title => ({
+        title,
+        data: grouped[title],
+    }));
+};
+// -------------------------------------
+
 
 const SCCItem = ({ SCC, date, id }: {
     SCC: string,
@@ -49,8 +105,8 @@ const SCCItem = ({ SCC, date, id }: {
 const SectionHeader = ({ title }: {
     title: string
 }) => (
-    <View className="bg-white py-2 border-gray-300 ml-2 mr-2 mb-3">
-        <Text className="text-lg font-bold text-gray-800 ml-2">
+    <View className="bg-gray-100 py-3 border-gray-300 ml-2 mr-2 mb-3 mt-4 rounded-lg">
+        <Text className="text-lg font-bold text-gray-800 ml-4">
             {title}
         </Text>
     </View>
@@ -60,26 +116,38 @@ const SectionHeader = ({ title }: {
 export default function SCCRecordsPage() {
     const router = useRouter();
     const { data } = useGetSCCRecordsQuery();
+
+    // --- MODIFIED: Group the data by month/year ---
+    const groupedRecords = groupAndSortRecords(data?.records as SCCRecord[] | undefined);
     
+    // The FlatList now iterates over the array of GroupedSection objects
     return (
         <View style={styles.container}>
             <FlatList
-                // Add explicit type to the data for better inference
-                data={data?.records as SCCRecord[] | undefined}
-                // Use SCCRecord type for item
-                renderItem={({ item }: { item: SCCRecord }) => ( 
-                    <>
-                        <SectionHeader title={item.sccName}/>
-                        <SCCItem 
-                            SCC={item.sccName} 
-                            date={item.date}
-                            // TypeScript now knows item._id is a REQUIRED string
-                            id={item._id} 
-                        />
-                    </>
+                // Data is now the grouped sections
+                data={groupedRecords}
+                // Key extractor uses the unique month/year title
+                keyExtractor={(item) => item.title} 
+                
+                // Render a Section block (Header + its items)
+                renderItem={({ item: section }) => ( 
+                    <View>
+                        {/* Section Header: e.g., "January 2024" */}
+                        <SectionHeader title={section.title}/>
+                        
+                        {/* Render all items within this section */}
+                        {section.data.map((item) => (
+                            <SCCItem 
+                                key={item._id}
+                                SCC={item.sccName} 
+                                date={item.date}
+                                id={item._id} 
+                            />
+                        ))}
+                    </View>
                 )}
-                // TypeScript now knows item._id is a REQUIRED string
-                keyExtractor={(item: SCCRecord) => item._id} 
+                
+                // Show 'NoRecords' if the groupedRecords array is empty
                 ListEmptyComponent={<NoRecords/>}
             />
             
