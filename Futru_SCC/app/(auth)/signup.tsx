@@ -26,7 +26,7 @@ const validationSchema = Yup.object<RegistrationValues>().shape({
     .min(3, 'Username must be at least 3 characters')
     .required('Username is required'),
   scc: Yup.string()
-    .min(4, 'SCC must be at least 4 digits/characters')
+    .min(4, 'SCC must be at least 3 characters')
     .required('SCC is required'),
   email: Yup.string()
     .email('Invalid email address')
@@ -126,7 +126,6 @@ function RegistrationPage() {
                   onChangeText={handleChange("scc")}
                   onBlur={handleBlur("scc")} 
                   label='SCC Name'
-                  keyboardType='numeric'
                 />
                 {touched.scc && errors.scc && (
                   <Text className='text-red-500 text-sm mt-1 mb-2 pl-1'>{errors.scc}</Text>
