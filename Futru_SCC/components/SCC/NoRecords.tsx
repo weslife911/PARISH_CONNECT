@@ -8,7 +8,7 @@ export default function NoRecords() {
             style={{ width: 275, height: 275,  }}
             className="mb-16"
         />
-        <Text className="font-[Roboto-Mono] text-center">
+        <Text className="font-[Roboto-Mono] text-center px-3">
             No SCC Records Found. Please add SCC Records to view them here.
         </Text>
     </View>

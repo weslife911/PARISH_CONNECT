@@ -1,5 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { Text, TouchableOpacity, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface Props {
   children: ReactNode;
@@ -48,7 +49,7 @@ class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: '#fff' }}>
+        <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: '#fff' }}>
           <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#dc2626', marginBottom: 10 }}>
             Something went wrong
           </Text>
@@ -82,7 +83,7 @@ class ErrorBoundary extends Component<Props, State> {
               Try Again
             </Text>
           </TouchableOpacity>
-        </View>
+        </SafeAreaView>
       );
     }
 

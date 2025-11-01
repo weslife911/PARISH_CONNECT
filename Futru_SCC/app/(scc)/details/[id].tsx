@@ -1,4 +1,3 @@
-// [id].tsx
 import React from 'react';
 import {
     Text,
@@ -8,28 +7,20 @@ import {
     TouchableOpacity,
     Image,
     FlatList,
-    ActivityIndicator, // For loading state
-    Alert, // For showing alerts
+    ActivityIndicator,
+    Alert,
 } from 'react-native';
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useGetSCCRecordQuery } from '@/services/SCC/queries';
 import { SCCRecord } from '@/types/sccTypes';
-
-import RNHTMLtoPDF from 'react-native-html-to-pdf'; 
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 
 
 // Helper function to format currency
 const formatCurrency = (amount: number) => {
     return `XAF ${amount.toLocaleString()}`;
 };
-
-// --- HELPER COMPONENTS (No changes needed, they will be used to structure the HTML) ---
-const DetailRow = ({ label, value }: { label: string, value: string | number }) => (
-    <View className="flex-row justify-between p-4 border-b border-gray-200 bg-white">
-        <Text className="text-base text-gray-500 font-medium">{label}</Text>
-        <Text className="text-base text-gray-800 font-semibold">{value}</Text>
-    </View>
-);
 
 const AttendanceBlock = ({ men, women, youth, catechumen, total }: { men: number, women: number, youth: number, catechumen: number, total: number }) => (
     <View className="mt-4 p-4 rounded-xl bg-indigo-50 border border-indigo-200 mx-4">
@@ -62,9 +53,10 @@ const EventImages = ({ images }: { images: (number | string)[] }) => {
         return null;
     }
     const renderItem = ({ item }: { item: number | string }) => (
-        <TouchableOpacity className="mr-3 shadow-md rounded-lg overflow-hidden">
+        <TouchableOpacity className="mr-3 mb-2 shadow-md rounded-lg overflow-hidden">
             <Image
                 source={typeof item === 'string' ? { uri: item } : item}
+                // @ts-ignore
                 style={styles.eventImage}
                 resizeMode="cover"
             />
@@ -80,27 +72,21 @@ const EventImages = ({ images }: { images: (number | string)[] }) => {
                 renderItem={renderItem}
                 keyExtractor={(_, index) => `image-${index}`}
                 showsHorizontalScrollIndicator={false}
+                // @ts-ignore
                 contentContainerStyle={styles.imageGalleryContainer}
             />
         </View>
     );
 };
+// --- END HELPER COMPONENTS ---
 
 
 export default function SCCDetailsPage() {
-    // State to manage loading during PDF generation
     const [isGeneratingPdf, setIsGeneratingPdf] = React.useState(false);
-    
-    // 1. GET ID FROM URL PARAMETERS
     const { id: recordId } = useLocalSearchParams<{ id: string }>();
-
-    // 2. FETCH DATA using the ID
     const { data, isLoading, isError } = useGetSCCRecordQuery(recordId ?? '');
-    
-    // Extract the record and handle optional properties
     const record: SCCRecord | undefined = data?.record;
 
-    // --- Loading and Error States ---
     if (isLoading) {
         return (
             <View style={styles.loadingContainer}>
@@ -118,8 +104,7 @@ export default function SCCDetailsPage() {
             </View>
         );
     }
-    
-    // --- Data is ready, use the 'record' object ---
+
     const men = record.menAttendance ?? 0;
     const women = record.womenAttendance ?? 0;
     const youth = record.youthAttendance?? 0;
@@ -128,36 +113,30 @@ export default function SCCDetailsPage() {
     const totalOfferings = record.totalOfferings ?? 0;
     const images = record.images;
 
-    // --- NEW: PDF GENERATION LOGIC ---
+    // --- PDF HTML GENERATION LOGIC ---
     const generatePdfHtml = (record: SCCRecord, totalAttendance: number, totalOfferings: number) => {
         const attendanceHtml = `
-            <div style="margin-top: 20px; padding: 15px; border: 1px solid #e0e7ff; background-color: #f5f8ff; border-radius: 8px;">
-                <h3 style="color: #4338ca; border-bottom: 2px solid #a5b4fc; padding-bottom: 5px; margin-bottom: 10px;">Attendance Summary</h3>
-                <table style="width: 100%; border-collapse: collapse;">
-                    <tr>
-                        <td style="padding: 5px; color: #4338ca;">Men:</td>
-                        <td style="padding: 5px; text-align: right; font-weight: bold;">${record.menAttendance ?? 0}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 5px; color: #4338ca;">Women:</td>
-                        <td style="padding: 5px; text-align: right; font-weight: bold;">${record.womenAttendance ?? 0}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 5px; color: #4338ca;">Youth:</td>
-                        <td style="padding: 5px; text-align: right; font-weight: bold;">${record.youthAttendance ?? 0}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 5px; color: #4338ca;">Catechumen:</td>
-                        <td style="padding: 5px; text-align: right; font-weight: bold;">${record.catechumenAttendance ?? 0}</td>
-                    </tr>
-                    <tr style="border-top: 2px solid #a5b4fc;">
-                        <td style="padding: 10px 5px; font-weight: bold; color: #1e3a8a;">TOTAL ATTENDANCE:</td>
-                        <td style="padding: 10px 5px; text-align: right; font-weight: bold; color: #1e3a8a;">${totalAttendance}</td>
-                    </tr>
-                </table>
-            </div>
+            <h2 style="font-size: 20px; font-weight: bold; color: #1f2937; margin-top: 20px; margin-bottom: 10px;">Attendance Breakdown (${totalAttendance} Total)</h2>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                <tr style="background-color: #f3f4f6;">
+                    <td style="padding: 10px; border: 1px solid #e5e7eb;">Men</td>
+                    <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold; text-align: right;">${men}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #e5e7eb;">Women</td>
+                    <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold; text-align: right;">${women}</td>
+                </tr>
+                <tr style="background-color: #f3f4f6;">
+                    <td style="padding: 10px; border: 1px solid #e5e7eb;">Youth</td>
+                    <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold; text-align: right;">${youth}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #e5e7eb;">Catechumen</td>
+                    <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold; text-align: right;">${catechumen}</td>
+                </tr>
+            </table>
         `;
-
+        
         const detailsHtml = `
             <div style="margin-top: 20px; padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px; background-color: #ffffff;">
                 <h3 style="color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; margin-bottom: 10px;">Event Details</h3>
@@ -177,34 +156,38 @@ export default function SCCDetailsPage() {
         `;
 
         const taskHtml = `
-            <div style="margin-top: 20px; padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px; background-color: #ffffff;">
-                <h3 style="color: #1f2937; margin-bottom: 10px;">Task/Notes</h3>
-                <p style="color: #4b5563; line-height: 1.6;">${record.task}</p>
-            </div>
+            <h3 style="font-size: 18px; font-weight: bold; color: #1f2937; margin-top: 20px;">Upcoming Tasks/Actions:</h3>
+            <p style="padding: 10px 0; line-height: 1.6; background-color: #f9fafb; padding: 10px; border-radius: 4px;">${record.task}</p>
         `;
-        
-        // **MODIFIED: Add Images HTML generation**
-        const imagesHtml = (record.images && record.images.length > 0) 
-            ? `
-            <div style="margin-top: 20px; padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px; background-color: #ffffff;">
-                <h3 style="color: #1f2937; margin-bottom: 15px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px;">Event Gallery</h3>
-                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                    ${record.images.filter(img => typeof img === 'string').map(imageUrl => `
-                        <img 
-                            src="${imageUrl}" 
-                            style="width: 150px; height: 100px; object-fit: cover; border-radius: 8px; margin-right: 10px; margin-bottom: 10px;"
-                            alt="Event Image"
-                        />
-                    `).join('')}
-                </div>
-            </div>
-            ` 
-            : '';
-        // **END MODIFIED SECTION**
+
+        let imagesHtml = ``;
+
+        if (images && images.length > 0) {
+            const imageElements = images
+                .map((img) => {
+                    const imageUrl = typeof img === 'string' ? img : '';
+                    if (imageUrl) {
+                        return `<img src="${imageUrl}" style="width: 200px; height: 200px; object-fit: cover; border-radius: 8px; margin: 10px;" />`;
+                    }
+                    return '';
+                })
+                .filter(Boolean)
+                .join('');
+
+            if (imageElements) {
+                imagesHtml = `
+                    <h3 style="font-size: 18px; font-weight: bold; color: #1f2937; margin-top: 20px; margin-bottom: 10px;">Event Gallery</h3>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                        ${imageElements}
+                    </div>
+                `;
+            }
+        }
 
         return `
             <html>
             <head>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
                 <style>
                     body { font-family: sans-serif; padding: 20px; color: #1f2937; }
                     .header { background-color: #f9fafb; padding: 15px; border-bottom: 2px solid #e5e7eb; margin-bottom: 20px; }
@@ -231,63 +214,75 @@ export default function SCCDetailsPage() {
                 ${attendanceHtml}
                 ${detailsHtml}
                 ${taskHtml}
-                ${imagesHtml} <div style="margin-top: 40px; text-align: center; color: #9ca3af; font-size: 12px;">
+                ${imagesHtml} 
+                <div style="margin-top: 40px; text-align: center; color: #9ca3af; font-size: 12px;">
                     Generated by SCC Reporting App on ${new Date().toLocaleDateString()}
                 </div>
             </body>
             </html>
         `;
     };
+    // --- END HTML GENERATION LOGIC ---
 
-    // MODIFIED: Function now only generates the PDF and confirms save location
+    // --- PDF GENERATION/DOWNLOAD FUNCTION ---
     const handleGenerateAndSharePdf = async () => {
-    if (isGeneratingPdf || !record) return;
+        if (isGeneratingPdf || !record) return;
 
-    setIsGeneratingPdf(true);
+        setIsGeneratingPdf(true);
 
-    // 1. Generate the HTML content
-    const htmlContent = generatePdfHtml(record, totalAttendance, totalOfferings);
+        try {
+            // 1. Generate the HTML content
+            const htmlContent = generatePdfHtml(record, totalAttendance, totalOfferings);
 
-    // 2. Configure the PDF options
-    const fileName = `${record.sccName.replace(/\s/g, '_')}_Report_${record.date}`;
-    let options = {
-        html: htmlContent,
-        fileName: fileName,
-        directory: 'Documents', // Use the Documents directory as requested
+            // 2. Create PDF from HTML using expo-print
+            const { uri } = await Print.printToFileAsync({
+                html: htmlContent,
+            });
+
+            // 3. Check if sharing is available
+            const isAvailable = await Sharing.isAvailableAsync();
+            
+            if (!isAvailable) {
+                Alert.alert('Error', 'Sharing is not available on this device.');
+                setIsGeneratingPdf(false);
+                return;
+            }
+
+            // 4. Share the PDF (user can save to Files/Downloads)
+            const fileName = `${record.sccName.replace(/\s/g, '_')}_Report_${record.date}.pdf`;
+            
+            await Sharing.shareAsync(uri, {
+                mimeType: 'application/pdf',
+                dialogTitle: 'Save your SCC Report',
+                UTI: 'com.adobe.pdf'
+            });
+            
+            Alert.alert(
+                'PDF Generated',
+                'The report has been generated successfully. You can now save it to your device.'
+            );
+            
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            Alert.alert('Error', 'Failed to generate the PDF file. Please try again.');
+        } finally {
+            setIsGeneratingPdf(false);
+        }
     };
-
-    try {
-        // 3. Generate the PDF file using the imported default export
-        const file = await RNHTMLtoPDF.convert(options); 
-        
-        // 4. Show success message with the file path
-        Alert.alert(
-            'PDF Generated', 
-            `The report PDF has been successfully saved to: ${file.filePath}`
-        );
-        
-    } catch (error) {
-        console.error('Error generating PDF:', error);
-        Alert.alert('Error', 'Failed to generate the PDF file. Please check permissions or try again.');
-    } finally {
-        setIsGeneratingPdf(false);
-    }
-};
+    // --- END FUNCTION ---
 
 
     return (
         <>
             <Stack.Screen
                 options={{
-                    // Use dynamic record data for the header title
-                    title: record.sccName, 
+                    title: record.sccName,
                     headerShadowVisible: false,
                     headerStyle: { backgroundColor: '#f9fafb' }
                 }}
             />
             <ScrollView className="flex-1 bg-gray-50">
-
-                {/* Offerings Summary (Highlighted) */}
+                {/* Detail components */}
                 <View className="p-4 bg-white border-b border-gray-200 mb-3">
                     <Text className="text-2xl font-bold text-gray-800">{record.sccName}</Text>
                     <Text className="text-lg text-gray-600 mt-1">{record.faithSharingName}</Text>
@@ -300,43 +295,27 @@ export default function SCCDetailsPage() {
                     </Text>
                 </View>
 
-                {/* Attendance Details */}
-                <AttendanceBlock 
-                    men={men} 
-                    women={women} 
-                    total={totalAttendance}
+                <AttendanceBlock
+                    men={men}
+                    women={women}
                     youth={youth}
                     catechumen={catechumen}
+                    total={totalAttendance}
                 />
 
-                {/* General Details Section */}
-                <View className="mt-6 mx-4 rounded-xl overflow-hidden shadow-sm border border-gray-200">
-                    <Text className="text-lg font-bold text-gray-800 p-4 bg-gray-100 border-b border-gray-200">Event Details</Text>
-                    <DetailRow
-                        label="Officiating Priest"
-                        value={record.officiatingPriestName}
-                    />
-                    <DetailRow
-                        label="Next Host"
-                        value={record.nextHost}
-                    />
-                    <DetailRow
-                        label="Word of Life"
-                        value={record.wordOfLife}
-                    />
+                <View className="p-4 bg-white mt-4 mx-4 rounded-xl shadow-sm border border-gray-200">
+                    <Text className="text-lg font-bold text-gray-800 mb-2">Meeting Summary</Text>
+                    <Text className="text-gray-600 leading-relaxed">{record.wordOfLife}</Text>
                 </View>
 
-                {/* Event Images Section */}
-                <EventImages images={images} /> 
-
-                {/* Description/Notes Section and Action Button */}
-                <View className="mt-4 mb-8 mx-4 p-4 bg-white rounded-xl shadow-sm border border-gray-200">
+                <View className="p-4 bg-white mt-4 mx-4 rounded-xl shadow-sm border border-gray-200">
                     <Text className="text-lg font-bold text-gray-800 mb-2">Task</Text>
-                    <Text className="text-base text-gray-600 leading-relaxed">
-                        {record.task}
-                    </Text>
+                    <Text className="text-gray-600 leading-relaxed">{record.task}</Text>
                 </View>
-                {/* --- BUTTON TEXT MODIFIED AND CALLS THE DOWNLOAD-ONLY FUNCTION --- */}
+
+                <EventImages images={images} />
+                
+                {/* PDF BUTTON */}
                 <TouchableOpacity 
                     className={`p-4 mx-4 rounded-xl mb-6 ${isGeneratingPdf ? 'bg-indigo-400' : 'bg-indigo-600'}`}
                     onPress={handleGenerateAndSharePdf}
@@ -355,7 +334,6 @@ export default function SCCDetailsPage() {
     );
 }
 
-// StyleSheet (no changes to styles, but listed for completeness)
 const styles = StyleSheet.create({
     loadingContainer: {
         flex: 1,
@@ -393,12 +371,12 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#1e3a8a',
     },
-    imageGalleryContainer: {
-        paddingHorizontal: 16,
-    },
     eventImage: {
         width: 150,
-        height: 100,
+        height: 150,
         borderRadius: 8,
     },
+    imageGalleryContainer: {
+        paddingHorizontal: 16,
+    }
 });

@@ -100,6 +100,7 @@ function SingleTextField({
         numberOfLines={numberOfLines}
         style={multilineStyles}
         returnKeyType={returnKeyType}
+        autoCapitalize="none"
       />
       
       {/* Visibility Toggle Icon */}

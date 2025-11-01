@@ -21,7 +21,7 @@ function SplashScreenPage() {
         style={{ width: 275, height: 275 }}
       />
       <Text className='h-48'>
-        FUTRU SCC
+        {"St. Micheal's Parish Futru"}
       </Text>
     </View>
   )

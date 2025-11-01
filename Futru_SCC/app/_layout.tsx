@@ -4,7 +4,7 @@ import Toast from 'react-native-toast-message';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import RootLayoutContent from "@/layout/RootLayoutContent";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import ErrorBoundary from '@/components/ErrorBoundary';
+import ErrorBoundary from '@/components/Boundary/ErrorBoundary';
 
 SplashScreen.preventAutoHideAsync();
 
