@@ -24,7 +24,7 @@ export const signupUser = async (req: Request, res: Response) => {
             });
         }        
 
-        const { full_name, username, email, SCC, password } = validation.data;
+        const { full_name, username, email, SCC, password, role } = validation.data;
 
         const user = await User.findOne({ email });
 
@@ -41,7 +41,8 @@ export const signupUser = async (req: Request, res: Response) => {
             username,
             email,
             SCC,
-            password: hashedPassword
+            password: hashedPassword,
+            role: role || "user"
         });
 
         if(!newUser) return res.status(500).json({

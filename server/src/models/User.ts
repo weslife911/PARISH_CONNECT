@@ -28,6 +28,10 @@ const userSchema = new Schema<UserDocument>({
     },
     profile_pic: {
         type: String
+    },
+    role: {
+        type: String,
+        default: "user"
     }
 }, { timestamps: true });
 

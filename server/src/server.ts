@@ -4,7 +4,7 @@ import express, { Application, Request, Response } from "express"
 import { config } from "dotenv"
 import connectToDb from "./db/connectToDb";
 import AuthRoutes from "./routes/AuthRoutes"
-import SCCRoutes from "./routes/SCCRoutes"
+import CommisionRoutes from "./routes/CommisionRoutes"
 import cors from "cors"
 // --- REMOVED IMPORT: express-fileupload is no longer used ---
 // import fileUpload from 'express-fileupload';
@@ -33,7 +33,7 @@ app.use(cors({
 }));
 
 app.use("/api/v1", AuthRoutes);
-app.use("/api/v1", SCCRoutes);
+app.use("/api/v1", CommisionRoutes);
 
 app.get("/health", (req: Request, res: Response) => {
     return res.status(200).json({
