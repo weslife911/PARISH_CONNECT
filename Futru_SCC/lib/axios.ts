@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios"
 
-const API_URL = "https://futru-scc-server.onrender.com/api/v1";
+const API_URL = "https://futru-scc-server.vercel.app/api/v1";
 //  const API_URL = "http://localhost:8080/api/v1"
 
 // FIXED: Corrected typo from axiosIntance to axiosInstance
