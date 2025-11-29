@@ -96,5 +96,27 @@ export const useAuthStore = create<useAuthStoreType>((set, get) => ({
         } catch (error) {
             console.error("Error during logout:", error);
         }
+    },
+
+    updateProfile: async(userId, data) => {
+        try {
+            const auth_token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
+
+            if (!auth_token) {
+                set({ isAuthenticated: false });
+                return null;
+            }
+            
+            return (await axiosInstance.put(`/update-profile/${userId}`, data, {
+                headers: {
+                    Authorization: `Bearer ${auth_token}`
+                }
+            })).data;
+        } catch (error) {
+            console.error("Authentication check failed:", error);
+            
+            set({ isAuthenticated: false }); 
+            return null;
+        }
     }
 }));

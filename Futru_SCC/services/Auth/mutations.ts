@@ -1,5 +1,5 @@
 import { useAuthStore } from "@/store/useAuthStore";
-import { AuthReturnType, LoginUserType, SignupUserType } from "@/types/authTypes";
+import { AuthReturnType, LoginUserType, ProfileType, SignupUserType } from "@/types/authTypes";
 import Toast from "react-native-toast-message";
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -91,7 +91,7 @@ export const useSignupUserMutation = () => {
     });
 }
 
-export const UseLogoutMutation = () => {
+export const useLogoutMutation = () => {
 
     const { logout } = useAuthStore();
     const queryClient = useQueryClient();
@@ -111,4 +111,34 @@ export const UseLogoutMutation = () => {
             await queryClient.invalidateQueries({ queryKey: ["currentUser"] }); 
         }
     })
+}
+
+export const useUpdateProfileMutation = (userId: string) => {
+    const { updateProfile } = useAuthStore();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationKey: ["updateProfile"],
+        mutationFn: async(data: ProfileType) => updateProfile(userId, data),
+        onSuccess: (data: AuthReturnType) => {
+            if(data.success) {
+                Toast.show({
+                    type: "success",
+                    text1: data?.message,
+                    position: "top",
+                    visibilityTime: 4000
+                });
+            } else {
+                Toast.show({
+                    type: "error",
+                    text1: data?.message || "Profile update failed.",
+                    position: "top",
+                    visibilityTime: 4000
+                });
+            }
+        },
+        onSettled: async () => {
+            await queryClient.invalidateQueries({ queryKey: ["updateProfile"] }); 
+        }
+    });
 }

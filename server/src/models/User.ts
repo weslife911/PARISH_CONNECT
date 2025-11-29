@@ -22,6 +22,12 @@ const userSchema = new Schema<UserDocument>({
         type: String,
         required: true,
         minLength: 8
+    },
+    bio: {
+        type: String
+    },
+    profile_pic: {
+        type: String
     }
 }, { timestamps: true });
 

@@ -3,12 +3,12 @@ import { Menu, UserCircle, LogOut } from 'lucide-react-native';
 import { useRouter } from "expo-router"
 import { useState } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
-import { UseLogoutMutation } from '@/services/Auth/mutations';
+import { useLogoutMutation } from '@/services/Auth/mutations';
 import { useNavigation } from "@react-navigation/native"
 
 export default function CustomHeader() {
   const [isPopoverVisible, setIsPopoverVisible] = useState(false);
-  const logoutUser = UseLogoutMutation();  
+  const logoutUser = useLogoutMutation();  
   const { isAuthenticated } = useAuthStore(); 
   const router = useRouter();
   const navigation = useNavigation();
@@ -35,7 +35,7 @@ export default function CustomHeader() {
           router.push("/(auth)/profile");
             break;
         case 'settings':
-            console.log("Navigating to Settings");
+          router.push("/(settings)");
             break;
         default:
             console.log(`Selected: ${action}`);
@@ -50,7 +50,7 @@ export default function CustomHeader() {
   const allPopoverOptions = [
     { label: "Login", action: "login", requiredAuth: false, icon: null, isDestructive: false },
     { label: 'Profile', action: 'view_profile', requiredAuth: true, icon: null, isDestructive: false },
-    { label: 'Settings', action: 'settings', requiredAuth: true, icon: null, isDestructive: false },
+    { label: 'Settings', action: 'settings', requiredAuth: false, icon: null, isDestructive: false },
     { label: 'Logout', action: 'logout', requiredAuth: true, icon: LogOut, isDestructive: true }, 
   ];
   

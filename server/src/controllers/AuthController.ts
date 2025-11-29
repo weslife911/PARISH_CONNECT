@@ -7,7 +7,7 @@ import { validateLoginUser } from '../validation/Auth/validateLoginUser';
 import { validateEmailAuth } from '../validation/Auth/validateEmailAuth';
 import { validateResetPassword } from '../validation/Auth/validateResetPassword';
 import { decodeToken } from '../lib/decodeToken';
-import { IUser } from '../types/Auth/IUser';
+import { validateUserData } from '../validation/Auth/validateProfile';
 
 export const signupUser = async (req: Request, res: Response) => {
     try {
@@ -226,4 +226,56 @@ export const resetPassword = async(req: Request, res: Response) => {
 
 export const checkAuth = (req: Request, res:Response) => {
     return res.json(req.user);
+}
+
+export const updateProfile = async(req: Request, res: Response) => {
+    try {
+
+        const { userId } = req.params;
+
+        const { full_name, username, email, SCC, bio, profile_pic } = req.body;
+
+        const validateUser = validateUserData.safeParse({
+            full_name: full_name || req.user?.full_name,
+            username: username || req.user?.username,
+            email: email || req.user?.email,
+            SCC: SCC || req.user?.SCC,
+            bio: bio || "",
+            profile_pic: profile_pic || ""
+        });
+
+        if(!validateUser.success) return res.json({
+            success: false,
+            message: validateUser.error.issues[0]?.message
+        });
+
+        const updatedUser = await User.findByIdAndUpdate(userId, {
+            $set: { full_name: validateUser.data.full_name, username: validateUser.data.username, email: validateUser.data.email, SCC: validateUser.data.SCC, bio: validateUser.data.bio, profile_pic: validateUser.data.profile_pic }
+        }, { new: true });
+
+        if(!updatedUser) return res.json({
+            success: false,
+            message: "Error while updating user"
+        });
+
+        return res.json({
+            success: true,
+            message: "Profile updated successfully"
+        });
+
+    } catch (e: any) {
+        if (e.name === 'JsonWebTokenError' || e.name === 'TokenExpiredError') {
+             return res.status(401).json({
+                success: false,
+                message: "Invalid or expired reset token."
+            });
+        }
+        
+        console.error("Update Profile error:", e);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: e instanceof Error ? e.message : "An unknown error occurred"
+        });
+    }
 }

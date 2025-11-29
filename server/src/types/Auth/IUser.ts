@@ -7,6 +7,8 @@ export interface IUser {
     email: string;
     SCC: string;
     password: string;
+    bio?: string,
+    profile_pic?: string
 }
 
 export type UserDocument = IUser & Document;

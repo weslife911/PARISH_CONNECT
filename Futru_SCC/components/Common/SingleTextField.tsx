@@ -19,6 +19,7 @@ interface SingleTextFieldProps {
     numberOfLines?: number; 
     error?: string | false | undefined | null; 
     returnKeyType?: TextInputProps['returnKeyType'];
+    editable?: boolean
 }
 
 function SingleTextField({ 
@@ -37,6 +38,7 @@ function SingleTextField({
     numberOfLines = 1,
     error,
     returnKeyType = 'default',
+    editable = true
 }: SingleTextFieldProps) {
   
   // Support both 'value' and 'text' props for backward compatibility
@@ -101,6 +103,7 @@ function SingleTextField({
         style={multilineStyles}
         returnKeyType={returnKeyType}
         autoCapitalize="none"
+        editable={editable}
       />
       
       {/* Visibility Toggle Icon */}
