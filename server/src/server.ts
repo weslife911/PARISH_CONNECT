@@ -2,7 +2,7 @@
 
 import express, { Application, Request, Response } from "express"
 import { config } from "dotenv"
-import { connectToDb } from "./db/connectToDb";
+import connectToDb from "./db/connectToDb";
 import AuthRoutes from "./routes/AuthRoutes"
 import SCCRoutes from "./routes/SCCRoutes"
 import cors from "cors"
