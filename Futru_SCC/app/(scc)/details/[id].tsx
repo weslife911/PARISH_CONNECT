@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useGetSCCRecordQuery } from '@/services/SCC/queries';
-import { SCCRecord } from '@/types/sccTypes';
+import { ImageUri, SCCRecord } from '@/types/sccTypes';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 
@@ -48,15 +48,22 @@ const AttendanceBlock = ({ men, women, youth, catechumen, total }: { men: number
     </View>
 );
 
-const EventImages = ({ images }: { images: (number | string)[] }) => {
-    if (!images || images.length === 0) {
+const EventImages = ({ images }: { images: ImageUri[] | undefined | string[] }) => {
+    
+    // Filter the images array to include only valid, non-empty string URLs (like Cloudinary links)
+    const validImageUrls = images.filter((item): item is string => 
+        typeof item === 'string' && item.length > 0
+    );
+
+    if (validImageUrls.length === 0) {
         return null;
     }
-    const renderItem = ({ item }: { item: number | string }) => (
+    
+    const renderItem = ({ item }: { item: string }) => (
         <TouchableOpacity className="mr-3 mb-2 shadow-md rounded-lg overflow-hidden">
             <Image
-                source={typeof item === 'string' ? { uri: item } : item}
-                // @ts-ignore
+                // Use the string URL directly for the uri property
+                source={{ uri: item }} 
                 style={styles.eventImage}
                 resizeMode="cover"
             />
@@ -68,9 +75,9 @@ const EventImages = ({ images }: { images: (number | string)[] }) => {
             <Text className="text-lg font-bold text-gray-800 mb-3 mx-4">Event Gallery</Text>
             <FlatList
                 horizontal
-                data={images}
+                data={validImageUrls} // Use the filtered list
                 renderItem={renderItem}
-                keyExtractor={(_, index) => `image-${index}`}
+                keyExtractor={(item, index) => `image-${index}`}
                 showsHorizontalScrollIndicator={false}
                 // @ts-ignore
                 contentContainerStyle={styles.imageGalleryContainer}
@@ -159,19 +166,20 @@ export default function SCCDetailsPage() {
             <h3 style="font-size: 18px; font-weight: bold; color: #1f2937; margin-top: 20px;">Upcoming Tasks/Actions:</h3>
             <p style="padding: 10px 0; line-height: 1.6; background-color: #f9fafb; padding: 10px; border-radius: 4px;">${record.task}</p>
         `;
-
+        
+        // --- MODIFIED: Explicitly filter for string URLs (Cloudinary) ---
+        const validImageUrls = images
+            ? images.filter((img): img is string => typeof img === 'string' && img.length > 0)
+            : [];
+            
         let imagesHtml = ``;
 
-        if (images && images.length > 0) {
-            const imageElements = images
-                .map((img) => {
-                    const imageUrl = typeof img === 'string' ? img : '';
-                    if (imageUrl) {
-                        return `<img src="${imageUrl}" style="width: 200px; height: 200px; object-fit: cover; border-radius: 8px; margin: 10px;" />`;
-                    }
-                    return '';
+        if (validImageUrls.length > 0) {
+            const imageElements = validImageUrls
+                .map((imageUrl) => {
+                    // Cloudinary URL is used directly as the image source in HTML
+                    return `<img src="${imageUrl}" style="width: 200px; height: 200px; object-fit: cover; border-radius: 8px; margin: 10px;" />`;
                 })
-                .filter(Boolean)
                 .join('');
 
             if (imageElements) {
@@ -183,6 +191,7 @@ export default function SCCDetailsPage() {
                 `;
             }
         }
+        // --- END MODIFIED BLOCK ---
 
         return `
             <html>

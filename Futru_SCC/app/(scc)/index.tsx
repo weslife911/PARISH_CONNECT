@@ -3,14 +3,14 @@ import {
     Text, 
     View,
     TouchableOpacity,
-    Image, 
     FlatList,
     StyleSheet,
-    ActivityIndicator
+    ActivityIndicator,
+    Dimensions
 } from 'react-native';
 import { useRouter } from "expo-router"
 import NoRecords from '@/components/SCC/NoRecords';
-import { Cross } from 'lucide-react-native';
+import { Plus } from 'lucide-react-native';
 import { useGetSCCRecordsQuery } from '@/services/SCC/queries';
 import { SCCRecord } from '@/types/sccTypes'; 
 
@@ -19,6 +19,7 @@ interface GroupedSection {
     data: SCCRecord[];
 }
 
+// Helper to group and sort records (No change needed here)
 const groupAndSortRecords = (records: SCCRecord[] | undefined): GroupedSection[] => {
     if (!records || records.length === 0) {
         return [];
@@ -54,6 +55,7 @@ const groupAndSortRecords = (records: SCCRecord[] | undefined): GroupedSection[]
     }));
 };
 
+// --- SCCItem Component (No change) ---
 const SCCItem = ({ SCC, date, id }: {
     SCC: string,
     date: string,
@@ -69,30 +71,55 @@ const SCCItem = ({ SCC, date, id }: {
         }
     };
     
+    // A more visually appealing card design with a shadow and a colored border
     return (
-        <TouchableOpacity onPress={handlePress} className="bg-white p-4 flex-row justify-between items-center rounded-xl mb-7 ml-2 mr-2 border-grey">
-            <View className="flex-1 mr-4">
-                <Text className="text-base text-gray-800 font-medium">{SCC}</Text>
-                <Text className="text-xs text-gray-500 mt-1">{date}</Text>
+        <TouchableOpacity 
+            onPress={handlePress} 
+            style={styles.card}
+            className="flex-row justify-between items-center bg-white"
+        >
+            <View className="flex-row items-center flex-1">
+                {/* Placeholder Image/Icon area */}
+                <View style={styles.iconContainer} className="bg-indigo-100 items-center justify-center">
+                     {/* Replace with a dynamic icon based on SCC name or use a static one */}
+                     <Text className="text-xl font-extrabold text-indigo-700">{SCC.charAt(0)}</Text>
+                </View>
+
+                <View className="flex-1 ml-4">
+                    <Text className="text-base text-gray-900 font-bold" numberOfLines={1}>{SCC}</Text>
+                    <Text className="text-sm text-gray-500 mt-0.5">Gathering Date: {date}</Text>
+                </View>
             </View>
             
-            <Image
-                source={require("@/assets/images/media.png")} 
-                className="w-12 h-12 rounded-lg bg-gray-300" 
-            />
+            {/* Simple Chevron or Arrow indicator */}
+            <Text className="text-xl text-gray-400 ml-4">{'>'}</Text>
+
         </TouchableOpacity>
     )
 }
 
+// --- SectionHeader Component (No change) ---
 const SectionHeader = ({ title }: { title: string }) => (
-    <View className="bg-gray-100 py-3 border-gray-300 ml-2 mr-2 mb-3 mt-4 rounded-lg">
-        <Text className="text-lg font-bold text-gray-800 ml-4">
+    <View className="py-2 ml-4 mr-4 mt-6 mb-2">
+        <Text className="text-xl font-bold text-gray-700">
             {title}
         </Text>
     </View>
 );
 
-export default function SCCRecordsPage() {
+// --- NEW: Commissions Placeholder Component ---
+const CommissionsScreen = () => {
+    return (
+        <View style={styles.placeholderContainer}>
+            <Text className="text-xl text-center text-gray-500 px-8">
+                Commission Records Coming Soon... 🛠️
+            </Text>
+        </View>
+    );
+};
+
+// --- REFACTORED: Original SCC List Component ---
+const SCCRecordsScreen = () => {
     const router = useRouter();
     const { data, isLoading, isError, error } = useGetSCCRecordsQuery();
 
@@ -100,7 +127,7 @@ export default function SCCRecordsPage() {
     if (isLoading) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#007AFF" />
+                <ActivityIndicator size="large" color="#4f46e5" />
                 <Text className="mt-4 text-gray-600">Loading records...</Text>
             </View>
         );
@@ -120,7 +147,7 @@ export default function SCCRecordsPage() {
     const groupedRecords = groupAndSortRecords(data?.records as SCCRecord[] | undefined);
     
     return (
-        <View style={styles.container}>
+        <View style={styles.screenContainer}>
             <FlatList
                 data={groupedRecords}
                 keyExtractor={(item) => item.title} 
@@ -138,11 +165,13 @@ export default function SCCRecordsPage() {
                     </View>
                 )}
                 ListEmptyComponent={<NoRecords/>}
+                contentContainerStyle={groupedRecords.length === 0 ? { flexGrow: 1 } : { paddingBottom: 100 }}
             />
             
+            {/* Floating Action Button (FAB) using Plus icon */}
             <TouchableOpacity 
                 style={styles.fab}
-                className='w-14 h-14 rounded-full bg-blue-600 
+                className='w-14 h-14 rounded-full bg-indigo-600 
                     flex justify-center items-center 
                     absolute bottom-6 right-6'
                 onPress={() => {
@@ -153,22 +182,124 @@ export default function SCCRecordsPage() {
                     }
                 }}
             >
-                <Cross size={24} color="white" />
+                <Plus size={24} color="white" />
             </TouchableOpacity>
         </View>
     )
 }
 
+// --- NEW: Tab Header Component ---
+const TabHeader = ({ activeTab, setActiveTab }: { activeTab: 'scc' | 'commissions', setActiveTab: (tab: 'scc' | 'commissions') => void }) => (
+    <View className="flex-row border-b border-gray-200 bg-white">
+        <TouchableOpacity
+            style={styles.tabButton}
+            onPress={() => setActiveTab('scc')}
+        >
+            <Text style={[
+                styles.tabText, 
+                activeTab === 'scc' && styles.activeTabText
+            ]}>
+                SCC Records
+            </Text>
+            {activeTab === 'scc' && <View style={styles.activeTabIndicator} />}
+        </TouchableOpacity>
+        <TouchableOpacity
+            style={styles.tabButton}
+            onPress={() => setActiveTab('commissions')}
+        >
+            <Text style={[
+                styles.tabText, 
+                activeTab === 'commissions' && styles.activeTabText
+            ]}>
+                Commissions
+            </Text>
+            {activeTab === 'commissions' && <View style={styles.activeTabIndicator} />}
+        </TouchableOpacity>
+    </View>
+);
+
+
+// --- MODIFIED: Export Default Component (now the Tab Container) ---
+export default function SCCRecordsPage() {
+    const [activeTab, setActiveTab] = React.useState<'scc' | 'commissions'>('scc');
+    
+    return (
+        <View style={styles.container}>
+            <TabHeader activeTab={activeTab} setActiveTab={setActiveTab} />
+            
+            {activeTab === 'scc' ? (
+                <SCCRecordsScreen />
+            ) : (
+                <CommissionsScreen />
+            )}
+        </View>
+    );
+}
+
 const styles = StyleSheet.create({
     container: {
         flex: 1, 
-        backgroundColor: 'white', 
+        backgroundColor: '#f9fafb', // Light gray background for contrast
+    },
+    screenContainer: { // New container for screen content
+        flex: 1,
     },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: '#f9fafb',
+    },
+    placeholderContainer: { // New style for commissions placeholder
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    // New Tab Styles
+    tabButton: {
+        flex: 1,
+        alignItems: 'center',
+        paddingVertical: 12,
+        position: 'relative',
+    },
+    tabText: {
+        fontSize: 16,
+        fontWeight: '500',
+        color: '#6b7280', // Gray text
+    },
+    activeTabText: {
+        color: '#4f46e5', // Indigo text
+        fontWeight: '700',
+    },
+    activeTabIndicator: {
+        position: 'absolute',
+        bottom: 0,
+        height: 3,
+        width: '100%',
+        backgroundColor: '#4f46e5', // Indigo bar
+    },
+    // Original Card Style for SCCItem
+    card: {
         backgroundColor: 'white',
+        borderRadius: 12,
+        padding: 16,
+        marginHorizontal: 16,
+        marginBottom: 10,
+        // Modern Shadow (iOS)
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 5,
+        // Elevation (Android)
+        elevation: 3,
+        borderLeftWidth: 5,
+        borderLeftColor: '#4f46e5', // Indigo accent color
+    },
+    iconContainer: {
+        width: 48,
+        height: 48,
+        borderRadius: 24, // Circular icon
     },
     fab: {
         position: 'absolute', 
@@ -178,13 +309,14 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         right: 20, 
         bottom: 20, 
-        backgroundColor: '#007AFF', 
+        backgroundColor: '#4f46e5', // Indigo color
         borderRadius: 30, 
-        elevation: 6, 
-        shadowColor: '#000', 
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
+        // Stronger FAB shadow
+        elevation: 8, 
+        shadowColor: '#4f46e5', 
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.4,
+        shadowRadius: 6,
         zIndex: 10, 
     },
 });

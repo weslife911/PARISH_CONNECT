@@ -11,7 +11,8 @@ import {
     Image, 
     TouchableOpacity,
     StyleSheet,
-    TextInput
+    TextInput,
+    ActivityIndicator
 } from "react-native";
 import { Stack, useRouter } from 'expo-router';
 import { useFormik } from 'formik'; 
@@ -33,7 +34,6 @@ type ImageType = Base64Image;
 
 const TOTAL_STEPS = 3;
 const MAX_IMAGES = 5;
-// FIXED: Add image size limit (2MB per image)
 const MAX_IMAGE_SIZE_MB = 2;
 
 const initialFormValues = {
@@ -85,6 +85,44 @@ const validationSchema = [
     }),
 ];
 
+// --- NEW COMPONENT: StepIndicator for visual progress ---
+const StepIndicator = ({ currentStep, totalSteps }: { currentStep: number, totalSteps: number }) => (
+    <View className="flex-row justify-center my-4 mx-4">
+        {Array.from({ length: totalSteps }).map((_, index) => {
+            const step = index + 1;
+            const isActive = step === currentStep;
+            const isCompleted = step < currentStep;
+            
+            let backgroundColor = 'bg-gray-200';
+            if (isActive) {
+                backgroundColor = 'bg-indigo-600';
+            } else if (isCompleted) {
+                backgroundColor = 'bg-emerald-500';
+            }
+
+            return (
+                <React.Fragment key={step}>
+                    <View 
+                        className={`w-8 h-8 rounded-full items-center justify-center mx-2 ${backgroundColor}`}
+                        style={{ opacity: isActive ? 1 : 0.6 }}
+                    >
+                        {isCompleted ? (
+                            <MaterialIcons name="check" size={18} color="white" />
+                        ) : (
+                            <Text className="text-white font-bold">{step}</Text>
+                        )}
+                    </View>
+                    {step < totalSteps && (
+                        <View className="h-px w-8 bg-gray-300 self-center" />
+                    )}
+                </React.Fragment>
+            );
+        })}
+    </View>
+);
+// --- END NEW COMPONENT ---
+
+
 export default function AddRecord() {
     const [currentStep, setCurrentStep] = useState(1); 
     const [selectedImages, setSelectedImages] = useState<ImageType[]>([]); 
@@ -113,7 +151,6 @@ export default function AddRecord() {
         }
     };
 
-    // FIXED: Add image size validation
     const checkImageSize = (base64: string, mimeType: string): boolean => {
         const base64Length = base64.length;
         const sizeInBytes = (base64Length * 3) / 4;
@@ -134,7 +171,7 @@ export default function AddRecord() {
                 mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 allowsMultipleSelection: true,
                 selectionLimit: MAX_IMAGES - selectedImages.length,
-                quality: 0.5, // FIXED: Reduced quality to 0.5 to reduce size
+                quality: 0.5, 
                 base64: true,
             });
 
@@ -218,7 +255,6 @@ export default function AddRecord() {
             submissionPayload[key] === undefined && delete submissionPayload[key]
         );
         
-        // FIXED: Better error handling
         try {
             await addRecordMutation.mutateAsync(submissionPayload as any, {
                 onSuccess: (data: sccRecordReturnType) => {
@@ -300,8 +336,8 @@ export default function AddRecord() {
             case 1:
                 return (
                     <View className="p-4">
-                        <Text className='font-[Roboto-Mono] text-xl font-bold text-center' style={{ height: 40 }}>
-                            ADD SCC RECORD 📝
+                        <Text className='text-2xl font-bold text-gray-800 mb-6 text-center'>
+                            1. Basic Event Details
                         </Text>
                         <SingleTextField
                             label="SCC Name"
@@ -331,7 +367,7 @@ export default function AddRecord() {
                                 <TextInput
                                     style={styles.dateTextInput}
                                     placeholder="YYYY-MM-DD (e.g., 2025-12-31)"
-                                    placeholderTextColor="#6B7280"
+                                    placeholderTextColor="#9ca3af" 
                                     value={values.date}
                                     onChangeText={handleChange('date')}
                                     onBlur={handleBlur('date')}
@@ -348,7 +384,7 @@ export default function AddRecord() {
                                     activeOpacity={0.8}
                                     style={styles.dateIcon}
                                 >
-                                    <MaterialIcons name="event" size={24} color="#6B7280" />
+                                    <MaterialIcons name="calendar-today" size={20} color="#4f46e5" />
                                 </TouchableOpacity>
                             </View>
 
@@ -396,6 +432,11 @@ export default function AddRecord() {
             case 2:
                 return (
                     <View className="p-4">
+                        <Text className='text-2xl font-bold text-gray-800 mb-6 text-center'>
+                            2. Attendance & Offerings
+                        </Text>
+                        <Text className='text-lg font-semibold text-indigo-700 mb-3'>Attendance Breakdown</Text>
+
                         <SingleTextField
                             label="Men Attendance"
                             placeholder="Enter number of men"
@@ -436,9 +477,11 @@ export default function AddRecord() {
                             keyboardType="numeric"
                             returnKeyType="next"
                         />
+
+                        <Text className='text-lg font-semibold text-emerald-700 mt-6 mb-3'>Financials</Text>
                         <SingleTextField
-                            label="Total Offerings (e.g., 500)"
-                            placeholder="Total amount collected"
+                            label="Total Offerings (XAF)"
+                            placeholder="Total amount collected, e.g., 57500.00"
                             value={values.totalOfferings}
                             onChangeText={(text) => handleNumericChange('totalOfferings', text, true)} 
                             onBlur={handleBlur('totalOfferings')}
@@ -452,6 +495,9 @@ export default function AddRecord() {
             case 3:
                 return (
                     <View className="p-4">
+                        <Text className='text-2xl font-bold text-gray-800 mb-6 text-center'>
+                            3. Summary & Next Steps
+                        </Text>
                         <SingleTextField
                             label="Word of Life/Theme Verse"
                             placeholder="Enter the main Word of Life or theme of the gathering"
@@ -461,21 +507,23 @@ export default function AddRecord() {
                             error={hasError('wordOfLife')}
                             keyboardType="default"
                             multiline={true}
-                            numberOfLines={2}
+                            numberOfLines={3} 
                             returnKeyType="next"
+                            style={{ height: 100, textAlignVertical: 'top' }} 
                         />
                         
                         <SingleTextField
                             label="Task/Outcome"
-                            placeholder="What was the main action/task decided?"
+                            placeholder="What was the main action/task decided? (e.g. Planning for feast day)"
                             value={values.task}
                             onChangeText={handleChange('task')}
                             onBlur={handleBlur('task')}
                             error={hasError('task')}
                             keyboardType="default"
                             multiline={true}
-                            numberOfLines={2}
+                            numberOfLines={3} 
                             returnKeyType="next"
+                            style={{ height: 100, textAlignVertical: 'top' }} 
                         />
                         
                         <SingleTextField
@@ -526,7 +574,14 @@ export default function AddRecord() {
         const stepSchema = validationSchema[currentStep - 1];
         
         try {
-            await stepSchema.validate(values, { abortEarly: false });
+            // Validate only the fields present in the current step's schema
+            const currentStepFields = Object.keys(stepSchema.fields);
+            const valuesToValidate = currentStepFields.reduce((acc, field) => {
+                acc[field] = values[field as keyof FormValues];
+                return acc;
+            }, {} as Partial<FormValues>);
+            
+            await stepSchema.validate(valuesToValidate, { abortEarly: false });
             
             if (currentStep < TOTAL_STEPS) {
                 setCurrentStep(prev => prev + 1);
@@ -565,25 +620,37 @@ export default function AddRecord() {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
         >
-            <Stack.Screen options={{ title: `Add New SCC Record (Step ${currentStep} of ${TOTAL_STEPS})` }} />
+            <Stack.Screen 
+                options={{ 
+                    title: `New Record (Step ${currentStep}/${TOTAL_STEPS})`,
+                    headerStyle: { backgroundColor: '#f9fafb' }
+                }} 
+            />
             
             <ScrollView 
                 ref={scrollViewRef}
-                className="flex-1 bg-white"
+                className="flex-1 bg-gray-50"
                 keyboardShouldPersistTaps="handled"
             >
+                {/* Global Step Indicator */}
+                <StepIndicator currentStep={currentStep} totalSteps={TOTAL_STEPS} />
+
                 {renderStepContent()} 
                 
                 <View className="p-4 pt-0">
                     <View className="flex-row justify-between mt-4">
                         {currentStep > 1 && (
-                            <CustomButton title="Back" onPress={handleBack} className='flex-1 mr-2 bg-gray-400'/>
+                            <CustomButton 
+                                title="Back" 
+                                onPress={handleBack} 
+                                className='flex-1 mr-2 bg-gray-500' // Consistent button style
+                            />
                         )}
                         {currentStep < TOTAL_STEPS && (
                             <CustomButton
                                 title="Next"
                                 onPress={handleNext} 
-                                className={`flex-1 ${currentStep === 1 ? 'ml-0' : 'ml-2'} bg-blue-500`}
+                                className={`flex-1 ${currentStep === 1 ? 'ml-0' : 'ml-2'} bg-indigo-600`} // Primary button color
                                 isLoading={isSubmitting} 
                             />
                         )}
@@ -592,7 +659,7 @@ export default function AddRecord() {
                                 title="Add Record"
                                 onPress={formik.handleSubmit}
                                 isLoading={addRecordMutation.isPending} 
-                                className='flex-1 bg-green-500' 
+                                className='flex-1 bg-emerald-600' // Final action button color
                             />
                         )}             
                     </View>
@@ -607,30 +674,37 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#1F2937', 
         marginBottom: 8,
-        fontWeight: '500',
+        fontWeight: '600', 
     },
     imagePreviewContainer: {
         position: 'relative',
         marginRight: 8,
         marginBottom: 8,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 2,
     },
     imagePreview: {
         width: 80, 
         height: 80,
-        borderRadius: 8,
+        borderRadius: 12, 
     },
     removeImageButton: {
         position: 'absolute',
-        top: -5,
-        right: -5,
+        top: -8, 
+        right: -8, 
         backgroundColor: 'white',
         borderRadius: 12,
         padding: 1,
+        zIndex: 10,
     },
     errorText: {
         fontSize: 12,
         color: '#EF4444',
         marginTop: 4,
+        fontStyle: 'italic',
     },
     datePickerContainer: {
         marginBottom: 16,
@@ -638,23 +712,29 @@ const styles = StyleSheet.create({
     dateInputWrapper: { 
         flexDirection: 'row',
         alignItems: 'center',
-        borderRadius: 8,
-        borderColor: '#D1D5DB',
+        borderRadius: 12, 
+        borderColor: '#e5e7eb', 
         borderWidth: 1,
-        backgroundColor: '#F9FAFB',
-        paddingHorizontal: 8,
+        backgroundColor: 'white', 
+        paddingHorizontal: 12,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 1,
     },
     dateTextInput: {
         flex: 1,
         fontSize: 16,
         color: '#1F2937',
-        paddingVertical: 12,
-        paddingHorizontal: 8,
+        paddingVertical: 14, 
+        paddingHorizontal: 0,
     },
     dateIcon: {
         padding: 8,
     },
     dateInputError: {
         borderColor: '#EF4444',
+        borderWidth: 2,
     },
 });
