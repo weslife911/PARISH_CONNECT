@@ -5,7 +5,8 @@ export interface IUser {
     full_name: string;
     username: string;
     email: string;
-    SCC: string;
+    deanery: string;
+    parish: string;
     password: string;
     bio?: string,
     profile_pic?: string,
