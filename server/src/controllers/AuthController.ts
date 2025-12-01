@@ -20,11 +20,11 @@ export const signupUser = async (req: Request, res: Response) => {
             return res.status(400).json({
                 success: false,
                 message: firstError?.message,
-                field: firstError?.path.join(".") || "Unknown"
             });
         }        
 
-        const { full_name, username, email, password, role } = validation.data;
+        // Destructure new fields: deanery and parish
+        const { full_name, username, email, password, deanery, parish, role } = validation.data;
 
         const user = await User.findOne({ email });
 
@@ -40,6 +40,9 @@ export const signupUser = async (req: Request, res: Response) => {
             full_name,
             username,
             email,
+            // Include new fields in user creation
+            deanery, 
+            parish,
             password: hashedPassword,
             role: role || "user"
         });

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:toastification/toastification.dart';
 import '../../main.dart';
-import 'package:futru_scc_app/components/admin/backend_note.dart';
 import '../../widgets/app_drawer.dart';
 import '../../widgets/helpers.dart'; // For showToast
 
@@ -14,7 +13,6 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final app = appState;
-    final cs = Theme.of(context).colorScheme;
     ThemeMode mode = app.themeMode;
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
@@ -60,7 +58,6 @@ class SettingsScreen extends StatelessWidget {
             ]),
           ),
           const SizedBox(height: 16),
-          BackendNote(cs: cs),
         ],
       ),
     );

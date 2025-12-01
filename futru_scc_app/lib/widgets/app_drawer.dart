@@ -30,7 +30,7 @@ class AppDrawer extends StatelessWidget {
                         bottomRight: Radius.circular(24),
                       ),
                       child: rive.RiveAnimation.asset(
-                        'assets/animations/vehicles.riv',
+                        'assets/animations/drawer.riv',
                         fit: BoxFit.cover,
                       ),
                     ),

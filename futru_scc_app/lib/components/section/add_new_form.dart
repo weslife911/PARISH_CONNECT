@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:futru_scc_app/components/admin/backend_note.dart';
 import 'package:futru_scc_app/widgets/helpers.dart';
 import 'package:toastification/toastification.dart';
 
@@ -19,7 +18,6 @@ class _AddNewFormState extends State<AddNewForm> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Form(
@@ -102,7 +100,6 @@ class _AddNewFormState extends State<AddNewForm> {
               ),
             ),
             const SizedBox(height: 12),
-            BackendNote(cs: cs),
           ],
         ),
       ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:futru_scc_app/components/admin/backend_note.dart';
 import "package:futru_scc_app/components/admin/action_chip_card.dart";
 import 'package:futru_scc_app/components/admin/metric_card.dart';
 // =============================================================================
@@ -70,7 +69,6 @@ class AdminDashboardScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          BackendNote(cs: cs),
         ],
       ),
     );
