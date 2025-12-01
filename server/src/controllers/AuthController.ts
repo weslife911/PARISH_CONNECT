@@ -24,7 +24,7 @@ export const signupUser = async (req: Request, res: Response) => {
             });
         }        
 
-        const { full_name, username, email, SCC, password, role } = validation.data;
+        const { full_name, username, email, password, role } = validation.data;
 
         const user = await User.findOne({ email });
 
@@ -40,7 +40,6 @@ export const signupUser = async (req: Request, res: Response) => {
             full_name,
             username,
             email,
-            SCC,
             password: hashedPassword,
             role: role || "user"
         });
@@ -54,14 +53,11 @@ export const signupUser = async (req: Request, res: Response) => {
 
         await newUser.save();
 
-        return res.json({
+        return res.status(201).json({
             success: true,
             message: "User created successfully",
             token
         });
-        
-        
-        return res.status(201).json({ success: true, message: "User created" });
 
     } catch (e: any) {
         console.error("Signup error:", e);

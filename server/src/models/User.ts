@@ -14,10 +14,6 @@ const userSchema = new Schema<UserDocument>({
         type: String,
         required: true
     },
-    SCC: {
-        type: String,
-        required: true
-    },
     password: {
         type: String,
         required: true,
