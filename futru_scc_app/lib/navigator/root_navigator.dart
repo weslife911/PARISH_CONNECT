@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:futru_scc_app/models/auth/check_auth_response_model.dart';
 import 'package:futru_scc_app/repositories/auth/check_auth_repository.dart';
 import 'package:futru_scc_app/screens/splash/splash_screen.dart';
-import '../main.dart'; // Import the updated main.dart
+import 'package:toastification/toastification.dart';
+import '../main.dart';
 import '../screens/auth/auth_screen.dart';
 import '../screens/onboarding/onboarding_screen.dart';
 import '../shell/main_shell.dart';
+import 'package:futru_scc_app/widgets/helpers.dart';
 
 // =============================================================================
 // ROOT NAVIGATOR (Splash -> Onboarding -> Auth -> Main)
@@ -38,12 +40,18 @@ class _RootNavigatorState extends ConsumerState<RootNavigator>
     } 
 
     final appStateNotifier = ref.read(appStateProvider.notifier);
+
+    showToast(context, checkAuthResponseModel.message!, type: checkAuthResponseModel.success == true ? ToastificationType.success : ToastificationType.error);
     
     if(checkAuthResponseModel.success == true && checkAuthResponseModel.user != null) {
+      // FIX: Correctly set the state using .state = value (replaces .update)
+      ref.read(checkAuthRepositoryStateProvider.notifier).update((state) => checkAuthResponseModel);
       
       appStateNotifier.setLoggedIn(true);
 
     } else {
+      // Also clear the state if auth fails (good practice)
+      ref.read(checkAuthRepositoryStateProvider.notifier).state = null; 
       appStateNotifier.setLoggedIn(false);
     }
     appStateNotifier.finishInit();

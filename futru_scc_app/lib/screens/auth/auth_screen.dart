@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:futru_scc_app/components/auth/brand_button.dart';
 import 'package:futru_scc_app/models/auth/auth_response_model.dart';
 import 'package:futru_scc_app/repositories/auth/auth_repository.dart';
+import 'package:futru_scc_app/repositories/auth/check_auth_repository.dart';
 import 'package:futru_scc_app/widgets/helpers.dart';
 import 'package:toastification/toastification.dart';
 import '../../constants.dart';
@@ -42,12 +43,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   // --- End Deanery and Parish List and Selection ---
 
   void loginUser() async {
+    print('DEBUG: Attempting to log in with Email: ${_email.text}'); // DEBUG
     setState(() {
       _isLoading = true;
     });
     try {
       // 1. Call the API
       authResponseModel = await ref.read(authRepositoryProvider).loginUser(_email.text, _password.text);
+      print('DEBUG: Login API Response received. Success: ${authResponseModel?.success}'); // DEBUG
       
       if(!mounted) {
         return;
@@ -60,18 +63,33 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
         showToast(context, authResponseModel!.message!, type: authResponseModel!.success ? ToastificationType.success : ToastificationType.error);
       }
       
-      if(authResponseModel?.success == true && authResponseModel!.token != null && authResponseModel!.token!.isNotEmpty) {
-        appStateNotifier.setLoggedIn(true);
+      if(authResponseModel?.success == true && authResponseModel!.token!.isNotEmpty) {
+        print('DEBUG: Login successful. Token received.'); // DEBUG
+        // *** NEW: Fetch and update user data after successful login ***
+        final checkAuthRepository = ref.read(checkAuthRepositoryProvider);
+        print('DEBUG: Calling checkAuth after successful login.'); // DEBUG
+        final checkAuthResponse = await checkAuthRepository.checkAuth();
+        
+        // Update the StateProvider with the user details
+        ref.read(checkAuthRepositoryStateProvider.notifier).update((state) => checkAuthResponse);
+        
+        // This triggers the RootNavigator to switch to MainShell
+        appStateNotifier.setLoggedIn(true); 
+        print('DEBUG: AppState setLoggedIn(true).'); // DEBUG
+
       } else {
+        print('DEBUG: Login failed. Setting AppState setLoggedIn(false).'); // DEBUG
         appStateNotifier.setLoggedIn(false);
       }
       
 
     } catch(e) {
+      print('DEBUG ERROR: Login failed with exception: $e'); // DEBUG
       if(mounted) {
         showToast(context, e.toString(), type: ToastificationType.error);
       }
     } finally {
+      print('DEBUG: Login process finished. Setting _isLoading = false.'); // DEBUG
       setState(() {
         _isLoading = false;
       });
@@ -79,25 +97,19 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   }
 
   void signupUser() async {
+    print('DEBUG: Attempting to sign up with Email: ${_email.text}, Deanery: $_selectedDeanery, Parish: $_selectedParish'); // DEBUG
     setState(() {
       _isLoading = true;
     });
     try {
       // 1. Call the API
-      // Ensure _selectedDeanery and _selectedParish are not null before passing to the repository (Form validation should handle this)
-      authResponseModel = await ref.read(authRepositoryProvider).signupUser(
-        _fullName.text, 
-        _username.text, 
-        _selectedDeanery!, 
-        _selectedParish!, 
-        _email.text, 
-        _password.text
-      );
+      authResponseModel = await ref.read(authRepositoryProvider).signupUser(_fullName.text, _username.text, _selectedDeanery!, _selectedParish!, _email.text, _password.text);
+      print('DEBUG: Signup API Response received. Success: ${authResponseModel?.success}'); // DEBUG
       
       if(!mounted) {
         return;
       }
-      
+
       // 2. Handle Response and Update AppState
       final appStateNotifier = ref.read(appStateProvider.notifier);
 
@@ -105,17 +117,32 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
         showToast(context, authResponseModel!.message!, type: authResponseModel!.success ? ToastificationType.success : ToastificationType.error);
       }
       
-      if(authResponseModel?.success == true && authResponseModel!.token != null && authResponseModel!.token!.isNotEmpty) {
-        appStateNotifier.setLoggedIn(true);
+      if(authResponseModel?.success == true && authResponseModel!.token!.isNotEmpty) {
+        print('DEBUG: Signup successful. Token received.'); // DEBUG
+        // *** NEW: Fetch and update user data after successful login ***
+        final checkAuthRepository = ref.read(checkAuthRepositoryProvider);
+        print('DEBUG: Calling checkAuth after successful signup.'); // DEBUG
+        final checkAuthResponse = await checkAuthRepository.checkAuth();
+        
+        // Update the StateProvider with the user details
+        ref.read(checkAuthRepositoryStateProvider.notifier).update((state) => checkAuthResponse);
+        
+        // This triggers the RootNavigator to switch to MainShell
+        appStateNotifier.setLoggedIn(true); 
+        print('DEBUG: AppState setLoggedIn(true).'); // DEBUG
+
       } else {
+        print('DEBUG: Signup failed. Setting AppState setLoggedIn(false).'); // DEBUG
         appStateNotifier.setLoggedIn(false);
       }
 
     } catch(e) {
+      print('DEBUG ERROR: Signup failed with exception: $e'); // DEBUG
       if(mounted) {
         showToast(context, e.toString(), type: ToastificationType.error);
       }
     } finally {
+      print('DEBUG: Signup process finished. Setting _isLoading = false.'); // DEBUG
       setState(() {
         _isLoading = false;
       });
@@ -250,7 +277,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                     // --- Deanery Dropdown Field (Sign Up Only) ---
                     if (!_isLogin)
                       DropdownButtonFormField<String>(
-                        value: _selectedDeanery,
+                        initialValue: _selectedDeanery,
                         decoration: const InputDecoration(
                           labelText: 'Select Deanery',
                           prefixIcon: Icon(Icons.location_city_outlined),
@@ -280,7 +307,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                     if (!_isLogin)
                       DropdownButtonFormField<String>(
                         // Only enable if a Deanery is selected
-                        value: _selectedParish,
+                        initialValue: _selectedParish,
                         decoration: const InputDecoration(
                           labelText: 'Select Parish',
                           // Keeping the prefix icon off to prevent overflow with long parish names
@@ -344,7 +371,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                         prefixIcon: Icon(Icons.lock_outline),
                       ),
                       validator: (v) =>
-                          v != null && v.length >= 6 ? null : 'Min 6 characters',
+                          v != null && v.length >= 8 ? null : 'Min 8 characters',
                     ),
                     const SizedBox(height: 16),
                     SizedBox(

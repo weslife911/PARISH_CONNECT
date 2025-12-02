@@ -7,7 +7,29 @@ class HeroHeader extends ConsumerWidget {
   const HeroHeader({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(checkAuthRepositoryStateProvider)?.user;
+    // Watch the entire CheckAuthResponseModel, not just .user, for changes
+    final checkAuthState = ref.watch(checkAuthRepositoryStateProvider);
+    final user = checkAuthState?.user;
+    
+    print('DEBUG: HeroHeader: Building. checkAuthState success: ${checkAuthState?.success}. User is null: ${user == null}'); 
+
+    // FIX: Add explicit null check to prevent crash (the cause of 'state still shows null in hero_header')
+    if (user == null) {
+      // Return a loading or placeholder widget if user data isn't available yet
+      return Container(
+        height: 180,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: AppGradients.primary(context),
+        ),
+        child: const Center(child: Text('Loading User...', style: TextStyle(color: Colors.white, fontSize: 18))),
+      );
+    }
+
+    // Safely use user's data now that we know it's not null
+    print('DEBUG: HeroHeader: User data found. Parish: ${user.parish}');
+
     return Container(
       height: 180,
       decoration: BoxDecoration(
@@ -22,7 +44,8 @@ class HeroHeader extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(user!.parish,
+                // FIX: Display user's parish safely, instead of jsonEncode(user) or user!.parish
+                Text('Welcome to ${user.parish}',
                     style: Theme.of(context)
                         .textTheme
                         .headlineSmall

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:futru_scc_app/components/detail_view.dart';
+import 'package:futru_scc_app/components/section/detail_view.dart';
 import 'package:futru_scc_app/widgets/helpers.dart';
 
 class ListTab extends StatelessWidget {

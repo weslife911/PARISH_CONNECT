@@ -45,7 +45,7 @@ class AppDrawer extends ConsumerWidget {
                     size: 48, 
                     color: iconColor,
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(
                     'Parish Connect',
                     style: Theme.of(context)
@@ -66,68 +66,79 @@ class AppDrawer extends ConsumerWidget {
             // END OF STANDARD DRAWER HEADER
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: EdgeInsets.symmetric(vertical: 8),
                 children: [
                   ListTile(
                     leading: Icon(Icons.home_outlined, color: cs.onSurfaceVariant),
-                    title: const Text('Home'),
+                    title: Text('Home'),
                     onTap: () => Navigator.pop(context),
                   ),
                   ListTile(
                     leading: Icon(Icons.event_outlined, color: cs.onSurfaceVariant),
-                    title: const Text('Activities'),
+                    title: Text('Activities ${ref.read(checkAuthRepositoryStateProvider)?.user?.role}'),
                     onTap: () => Navigator.pop(context),
                   ),
-                  const Divider(),
+                  Divider(),
                   if(isAdmin) ListTile(
                     leading: Icon(Icons.dashboard_customize_outlined, color: cs.onSurfaceVariant),
-                    title: const Text('Admin Dashboard'),
+                    title: Text('Admin Dashboard'),
                     onTap: () => Navigator.pop(context),
                   ),
                   ListTile(
                     leading: Icon(Icons.groups_2_outlined, color: cs.onSurfaceVariant),
-                    title: const Text('SCC'),
+                    title: Text('SCC'),
                     onTap: () {
                       Navigator.pop(context);
-                      Navigator.of(context).push(AnimatedRoute(const SectionScreen(title: 'SCC')));
+                      Navigator.of(context).push(AnimatedRoute(SectionScreen(title: 'SCC')));
                     },
                   ),
                   ListTile(
                     leading: Icon(Icons.church_outlined, color: cs.onSurfaceVariant),
-                    title: const Text('Parish'),
+                    title: Text('Parish'),
                     onTap: () {
                       Navigator.pop(context);
-                      Navigator.of(context).push(AnimatedRoute(const SectionScreen(title: 'Parish')));
+                      Navigator.of(context).push(AnimatedRoute(SectionScreen(title: 'Parish')));
                     },
                   ),
                   ListTile(
                     leading: Icon(Icons.location_city_outlined, color: cs.onSurfaceVariant),
-                    title: const Text('Mission Station'),
+                    title: Text('Mission Station'),
                     onTap: () {
                       Navigator.pop(context);
-                      Navigator.of(context).push(AnimatedRoute(const SectionScreen(title: 'Mission Station')));
+                      Navigator.of(context).push(AnimatedRoute(SectionScreen(title: 'Mission Station')));
                     },
                   ),
                   ListTile(
                     leading: Icon(Icons.account_balance_outlined, color: cs.onSurfaceVariant),
-                    title: const Text('Deanery'),
+                    title: Text('Deanery'),
                     onTap: () {
                       Navigator.pop(context);
-                      Navigator.of(context).push(AnimatedRoute(const SectionScreen(title: 'Deanery')));
+                      Navigator.of(context).push(AnimatedRoute(SectionScreen(title: 'Deanery')));
                     },
                   ),
-                  const Divider(),
+                  Divider(),
                   SwitchListTile(
-                    title: const Text('Dark Mode'),
+                    title: Text('Dark Mode'),
                     value: appState.themeMode == ThemeMode.dark,
                     onChanged: (v) => appState.setThemeMode(v ? ThemeMode.dark : ThemeMode.light),
                   ),
                   ListTile(
-                    leading: const Icon(Icons.logout, color: Colors.red),
-                    title: const Text('Logout'),
+                    leading: Icon(Icons.logout, color: Colors.red),
+                    title: Text('Logout'),
                     onTap: () async {
+                      // 1. Clear the token from storage
                       await LocalStorageRepository().removeJWTAuthToken();
-                      context.goNamed("auth");
+                      
+                      // 2. Reset Riverpod Auth State
+                      ref.read(checkAuthRepositoryStateProvider.notifier).state = null;
+                      
+                      // 3. Update App State (triggers RootNavigator to switch to AuthScreen)
+                      ref.read(appStateProvider.notifier).setLoggedIn(false);
+
+                      // 4. Navigate to Auth Screen (using goRouter)
+                      if(context.mounted) {
+                        context.goNamed("auth");
+                      }
                     },
                   ),
                 ],

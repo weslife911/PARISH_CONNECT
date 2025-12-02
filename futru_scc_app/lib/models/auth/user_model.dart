@@ -1,4 +1,4 @@
-
+// user_model.dart (FIXED)
 
 import 'dart:convert';
 
@@ -13,7 +13,7 @@ class UserModel {
     final String email;
     final String deanery;
     final String parish;
-    final String password;
+    final String? password; // <--- MADE NULLABLE
     final String? bio;
     final String? profilePic;
     final String? role;
@@ -25,7 +25,7 @@ class UserModel {
         required this.email,
         required this.deanery,
         required this.parish,
-        required this.password,
+        this.password, // <--- REMOVED 'REQUIRED'
         this.bio,
         this.profilePic,
         this.role,
@@ -33,12 +33,13 @@ class UserModel {
 
     factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
       id: json["_id"],
-        fullName: json["full_name"],
-        username: json["username"],
-        email: json["email"],
-        deanery: json["deanery"],
-        parish: json["parish"],
-        password: json["password"],
+        // Use ?? '' for fields that MUST be present on the model but might be null from the API
+        fullName: json["full_name"] ?? '', // <--- ADDED NULL CHECK
+        username: json["username"] ?? '',  // <--- ADDED NULL CHECK
+        email: json["email"] ?? '',        // <--- ADDED NULL CHECK
+        deanery: json["deanery"] ?? '',    // <--- ADDED NULL CHECK
+        parish: json["parish"] ?? '',      // <--- ADDED NULL CHECK
+        password: json["password"],        // Already nullable, no need for ?? ''
         bio: json["bio"],
         profilePic: json["profile_pic"],
         role: json["role"],

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:toastification/toastification.dart';
-import '../widgets/helpers.dart'; // For showToast
+import '../../widgets/helpers.dart'; // For showToast
 
 // =============================================================================
 // DETAIL VIEW

@@ -12,6 +12,7 @@ final checkAuthRepositoryProvider = Provider((ref) => CheckAuthRepository(
 
 final checkAuthRepositoryStateProvider = StateProvider<CheckAuthResponseModel?>((ref) => null);
 
+
 class CheckAuthRepository {
   final Client _client;
   final LocalStorageRepository _localStorageRepository;
@@ -22,27 +23,66 @@ class CheckAuthRepository {
   }): _client = client, _localStorageRepository = localStorageRepository;
 
   Future<CheckAuthResponseModel> checkAuth() async {
+    // -------------------------------------------------------------------
+    print('DEBUG: Starting checkAuth() process...');
+    // -------------------------------------------------------------------
     final ApiConfig config = ApiConfig();
     final String path = config.apiBasePath + config.checkAuthUrl;
     final Uri url = Uri.https(config.apiBaseUrl, path);
+    print('DEBUG: Constructed URL: $url');
+    
     final jwtAuthToken = await _localStorageRepository.getJWTAuthToken();
-    final response = await _client.get(
-      url,
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $jwtAuthToken"
-      }
-    );
-
+    
+    // Check if a token exists locally before making the request
+    if (jwtAuthToken == null || jwtAuthToken.isEmpty) {
+      print('DEBUG: No JWT token found in local storage. Returning failure.');
+      return CheckAuthResponseModel(
+        success: false,
+        message: "No authentication token found. Please log in.",
+        user: null
+      );
+    }
+    
+    print('DEBUG: JWT Token retrieved (first 10 chars): ${jwtAuthToken.substring(0, 10)}...');
+    
     try {
+      final response = await _client.get(
+        url,
+        headers: {
+          "Authorization": "Bearer $jwtAuthToken"
+        }
+      );
+
+      // -------------------------------------------------------------------
+      print('DEBUG: API call completed. Status Code: ${response.statusCode}');
+      // -------------------------------------------------------------------
+
+      // Explicitly handle 401 Unauthorized (Token expired/invalid)
+      if (response.statusCode == 401) {
+        await _localStorageRepository.removeJWTAuthToken(); 
+        print('DEBUG: Status 401 received. Token cleared and returning session expired message.');
+        return CheckAuthResponseModel(
+          success: false,
+          message: "Session expired or invalid. Please log in again.",
+          user: null
+        );
+      }
+      
       final jsonResponse = checkAuthResponseModelFromJson(response.body);
+      
       if(response.statusCode == 200 || response.statusCode == 201) {
+        // -------------------------------------------------------------------
+        print('DEBUG: Status ${response.statusCode}. Auth check SUCCESS. User role: ${jsonResponse.user?.role}');
+        // -------------------------------------------------------------------
         return CheckAuthResponseModel(
           success: jsonResponse.success,
           message: "",
           user: jsonResponse.user
         );
       } else {
+        // -------------------------------------------------------------------
+        print('DEBUG: Status ${response.statusCode}. Auth check FAILURE. Message: ${jsonResponse.message}');
+        // -------------------------------------------------------------------
         return CheckAuthResponseModel(
           success: jsonResponse.success,
           message: jsonResponse.message,
@@ -50,9 +90,12 @@ class CheckAuthRepository {
         );
       }
     } catch(e) {
+      // -------------------------------------------------------------------
+      print('ERROR: An exception occurred during checkAuth: ${e.toString()}');
+      // -------------------------------------------------------------------
       return CheckAuthResponseModel(
         success: false,
-        message: e.toString(),
+        message: "Failed to process server response: ${e.toString()}",
         user: null
       );
     }

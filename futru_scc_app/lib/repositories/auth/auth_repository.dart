@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:futru_scc_app/config/api_config.dart';
 import 'package:futru_scc_app/models/auth/auth_response_model.dart';
@@ -24,17 +23,32 @@ class AuthRepository {
     final ApiConfig config = ApiConfig();
     final String path = config.apiBasePath + config.loginUrl;
     final Uri url = Uri.https(config.apiBaseUrl, path);
+    
+    // --- Debugging: Log URL and request body ---
+    final body = jsonEncode({
+      "email": email,
+      "password": password
+    });
+    print('--- Login Request ---');
+    print('URL: $url');
+    print('Body: $body');
+    // ------------------------------------------
+    
     final response = await _client.post(
       url,
-      body: jsonEncode({
-        "email": email,
-        "password": password
-      }),
+      body: body,
       headers: {
         "Content-Type": "application/json",
       }
     );
+    
     try {
+      // --- Debugging: Log response info ---
+      print('--- Login Response ---');
+      print('Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+      // ------------------------------------
+
       final jsonResponse = authResponseModelFromJson(response.body);
       if(response.statusCode == 200 || response.statusCode == 201) {
         await _localStorageRepository.setJWTAuthToken(jsonResponse.token!);
@@ -46,13 +60,19 @@ class AuthRepository {
       } else {
         return AuthResponseModel(
           success: jsonResponse.success,
-          message: jsonResponse.message
+          message: jsonResponse.message,
+          token: ""
         );
       }
     } catch(e) {
+      // --- Debugging: Log error on failure ---
+      print('--- Login Error ---');
+      print('Exception caught: $e');
+      // ---------------------------------------
       return AuthResponseModel(
         success: false,
-        message: e.toString()
+        message: e.toString(),
+        token: ""
       );
     }
   }
@@ -61,21 +81,36 @@ class AuthRepository {
     final ApiConfig config = ApiConfig();
     final String path = config.apiBasePath + config.signupUrl;
     final Uri url = Uri.https(config.apiBaseUrl, path);
+    
+    // --- Debugging: Log URL and request body ---
+    final body = jsonEncode({
+      "full_name": fullName,
+      "username": userName,
+      "email": email,
+      "deanery": deanery,
+      "parish": parish,
+      "password": password
+    });
+    print('--- Signup Request ---');
+    print('URL: $url');
+    print('Body: $body');
+    // -------------------------------------------
+    
     final response = await _client.post(
       url,
-      body: jsonEncode({
-        "full_name": fullName,
-        "username": userName,
-        "email": email,
-        "deanery": deanery,
-        "parish": parish,
-        "password": password
-      }),
+      body: body,
       headers: {
         "Content-Type": "application/json",
       }
     );
+    
     try {
+      // --- Debugging: Log response info ---
+      print('--- Signup Response ---');
+      print('Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+      // ------------------------------------
+
       final jsonResponse = authResponseModelFromJson(response.body);
       if(response.statusCode == 200 || response.statusCode == 201) {
         await _localStorageRepository.setJWTAuthToken(jsonResponse.token!);
@@ -87,13 +122,19 @@ class AuthRepository {
       } else {
         return AuthResponseModel(
           success: jsonResponse.success,
-          message: jsonResponse.message
+          message: jsonResponse.message,
+          token: ""
         );
       }
     } catch(e) {
+      // --- Debugging: Log error on failure ---
+      print('--- Signup Error ---');
+      print('Exception caught: $e');
+      // ---------------------------------------
       return AuthResponseModel(
         success: false,
-        message: e.toString()
+        message: e.toString(),
+        token: ""
       );
     }
   }
