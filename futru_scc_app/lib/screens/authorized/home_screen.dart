@@ -1,3 +1,5 @@
+// home_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,7 +42,12 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        // FIX: Add padding to the bottom of the ListView.
+        // This pushes the scrollable content up, so it doesn't get covered 
+        // by the externally placed bottom navigation bar.
+        // The value (e.g., 90) should be slightly greater than the height of your 
+        // AnimatedBottomNavBar (72) plus its bottom margin (16).
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 90), 
         children: [
           HeroHeader().animate().fadeIn(duration: 400.ms).move(begin: const Offset(0, 12)),
           const SizedBox(height: 16),
@@ -104,4 +111,3 @@ class HomeScreen extends ConsumerWidget {
     Navigator.of(context).push(AnimatedRoute(SectionScreen(title: title)));
   }
 }
-

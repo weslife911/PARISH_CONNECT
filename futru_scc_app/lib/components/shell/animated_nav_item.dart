@@ -40,16 +40,19 @@ class AnimatedNavItem extends StatelessWidget {
                 duration: const Duration(milliseconds: 250),
                 child: SizedBox(width: selected ? 8 : 0),
               ),
-              AnimatedOpacity(
-                duration: const Duration(milliseconds: 250),
-                opacity: selected ? 1 : 0,
-                child: Text(
-                  selected ? item.label : '',
-                  overflow: TextOverflow.fade,
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelLarge
-                      ?.copyWith(color: cs.onPrimaryContainer, fontWeight: FontWeight.w700),
+              // FIX: Wrap AnimatedOpacity with Expanded to constrain the Text widget.
+              Expanded(
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 250),
+                  opacity: selected ? 1 : 0,
+                  child: Text(
+                    selected ? item.label : '',
+                    overflow: TextOverflow.ellipsis, // Use ellipsis for clear constraint
+                    style: Theme.of(context)
+                        .textTheme
+                        .labelLarge
+                        ?.copyWith(color: cs.onPrimaryContainer, fontWeight: FontWeight.w700),
+                  ),
                 ),
               ),
             ],

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:toastification/toastification.dart';
 import '../../main.dart';
 import '../../widgets/app_drawer.dart';
 import '../../widgets/helpers.dart'; // For showToast
+import 'package:futru_scc_app/repositories/storage/local_storage_repository.dart';
+import 'package:futru_scc_app/repositories/auth/check_auth_repository.dart';
 
 // =============================================================================
 // SETTINGS
@@ -19,7 +22,8 @@ class SettingsScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Settings')),
       drawer: const AppDrawer(),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        // FIX: Added bottom padding to raise content above the custom bottom navigation bar.
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
         children: [
           Card(
             child: Column(children: [
@@ -49,7 +53,21 @@ class SettingsScreen extends ConsumerWidget {
               ListTile(
                 leading: const Icon(Icons.logout, color: Colors.red),
                 title: const Text('Logout'),
-                onTap: () {},
+                onTap: () async {
+                      // 1. Clear the token from storage
+                      await LocalStorageRepository().removeJWTAuthToken();
+                      
+                      // 2. Reset Riverpod Auth State
+                      ref.read(checkAuthRepositoryStateProvider.notifier).state = null;
+                      
+                      // 3. Update App State (triggers RootNavigator to switch to AuthScreen)
+                      ref.read(appStateProvider.notifier).setLoggedIn(false);
+
+                      // 4. Navigate to Auth Screen (using goRouter)
+                      if(context.mounted) {
+                        context.goNamed("auth");
+                      }
+                    },
               ),
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: Colors.red),

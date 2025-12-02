@@ -75,7 +75,7 @@ class AppDrawer extends ConsumerWidget {
                   ),
                   ListTile(
                     leading: Icon(Icons.event_outlined, color: cs.onSurfaceVariant),
-                    title: Text('Activities ${ref.read(checkAuthRepositoryStateProvider)?.user?.role}'),
+                    title: Text('Activities'),
                     onTap: () => Navigator.pop(context),
                   ),
                   Divider(),

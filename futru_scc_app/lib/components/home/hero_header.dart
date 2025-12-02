@@ -39,29 +39,42 @@ class HeroHeader extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          Expanded(
+          Expanded( // Takes up all remaining space in the Row
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // FIX: Display user's parish safely, instead of jsonEncode(user) or user!.parish
-                Text('Welcome to ${user.parish}',
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineSmall
-                        ?.copyWith(color: Colors.white, fontWeight: FontWeight.w800)),
+                // FIX: Ensure the text widget uses the full horizontal space available 
+                // in the Expanded parent, allowing it to wrap.
+                Flexible( 
+                  child: Text('Welcome to ${user.parish}',
+                      maxLines: 3, // Allow wrapping up to 3 lines
+                      // Ensure text is clipped if it somehow still overflows
+                      overflow: TextOverflow.ellipsis, 
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineSmall
+                          ?.copyWith(
+                            color: Colors.white, 
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18.0, // Reduced font size to 18.0
+                          )),
+                ),
                 const SizedBox(height: 8),
-                Text('“One body, many parts.”',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(color: Colors.white.withValues(alpha: 0.9))),
+                // Secondary text is also wrapped in Flexible to ensure vertical fit
+                // Flexible(
+                //   child: Text('“One body, many parts.”',
+                //       style: Theme.of(context)
+                //           .textTheme
+                //           .titleMedium
+                //           ?.copyWith(color: Colors.white.withOpacity(0.9))),
+                // ),
                 const SizedBox(height: 16),
                 FilledButton.tonal(
                   onPressed: () {},
                   style: ButtonStyle(
                     backgroundColor:
-                        WidgetStatePropertyAll(Colors.white.withValues(alpha: 0.2)),
+                        WidgetStatePropertyAll(Colors.white.withOpacity(0.2)),
                     foregroundColor: const WidgetStatePropertyAll(Colors.white),
                   ),
                   child: const Text('View Bulletin'),
@@ -70,7 +83,13 @@ class HeroHeader extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: 12),
-          const Icon(Icons.temple_buddhist, size: 96, color: Colors.white),
+          // Set a constrained size for the Icon to ensure it doesn't take up 
+          // too much space, giving more room to the Expanded Column.
+          SizedBox(
+            width: 96, 
+            height: 96,
+            child: const Icon(Icons.temple_buddhist, size: 96, color: Colors.white)
+          ),
         ],
       ),
     );

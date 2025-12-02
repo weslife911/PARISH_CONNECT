@@ -14,11 +14,13 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     final isAdmin = ref.read(checkAuthRepositoryStateProvider)!.user!.role;
+    final user = ref.read(checkAuthRepositoryStateProvider)!.user;
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
-      drawer: const AppDrawer(),
+      appBar: AppBar(title: Text('Profile')),
+      drawer: AppDrawer(),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        // FIX: Added bottom padding to raise content above the custom bottom navigation bar.
+        padding: EdgeInsets.fromLTRB(16, 16, 16, 90),
         children: [
           Center(
             child: Column(
@@ -28,7 +30,7 @@ class ProfileScreen extends ConsumerWidget {
                   backgroundColor: cs.primaryContainer,
                   child: Icon(Icons.person, size: 44, color: cs.onPrimaryContainer),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Text('Alex Johnson',
                     style: Theme.of(context)
                         .textTheme
@@ -42,35 +44,34 @@ class ProfileScreen extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Contact Information',
                       style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  const KeyValueRow(icon: Icons.email, label: 'Email', value: 'alex@example.com'),
-                  const KeyValueRow(icon: Icons.phone, label: 'Phone', value: '+1 555 0101'),
-                  const KeyValueRow(icon: Icons.place, label: 'Parish', value: 'St. Mary’s'),
+                  SizedBox(height: 8),
+                  KeyValueRow(icon: Icons.email, label: 'Email', value: user!.email),
+                  KeyValueRow(icon: Icons.place, label: 'Parish', value: user!.parish),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Responsibilities', style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   ...['Youth Ministry', 'Charity Committee', 'Music Team'].map(
                     (r) => ListTile(
-                      leading: const Icon(Icons.check_circle_outline, color: Colors.green),
+                      leading: Icon(Icons.check_circle_outline, color: Colors.green),
                       title: Text(r),
                     ),
                   )
@@ -83,4 +84,3 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 }
-

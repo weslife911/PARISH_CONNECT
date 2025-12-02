@@ -28,7 +28,8 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
       body: RefreshIndicator(
         onRefresh: _refresh,
         child: ListView.builder(
-          padding: const EdgeInsets.all(12),
+          // FIX: Added bottom padding to raise content above the custom bottom navigation bar.
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 90),
           itemCount: items.length,
           itemBuilder: (context, i) => ActivityTile(
             title: items[i],
@@ -40,4 +41,3 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
     );
   }
 }
-
