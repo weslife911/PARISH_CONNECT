@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
 import '../../main.dart';
 import '../../widgets/app_drawer.dart';
@@ -8,11 +9,11 @@ import '../../widgets/helpers.dart'; // For showToast
 // SETTINGS
 // =============================================================================
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
   @override
-  Widget build(BuildContext context) {
-    final app = appState;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final app = ref.watch(appStateProvider);
     ThemeMode mode = app.themeMode;
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
@@ -48,7 +49,7 @@ class SettingsScreen extends StatelessWidget {
               ListTile(
                 leading: const Icon(Icons.logout, color: Colors.red),
                 title: const Text('Logout'),
-                onTap: () => appState.logout(),
+                onTap: () {},
               ),
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: Colors.red),

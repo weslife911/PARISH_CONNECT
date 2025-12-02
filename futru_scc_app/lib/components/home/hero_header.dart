@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:futru_scc_app/theme/theme.dart';
+import "package:futru_scc_app/repositories/auth/check_auth_repository.dart";
 
-class HeroHeader extends StatelessWidget {
+class HeroHeader extends ConsumerWidget {
   const HeroHeader({super.key});
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(checkAuthRepositoryStateProvider)?.user;
     return Container(
       height: 180,
       decoration: BoxDecoration(
@@ -19,7 +22,7 @@ class HeroHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('St. Mary’s Parish',
+                Text(user!.parish,
                     style: Theme.of(context)
                         .textTheme
                         .headlineSmall

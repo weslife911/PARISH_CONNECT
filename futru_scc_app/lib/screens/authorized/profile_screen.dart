@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:futru_scc_app/components/profile/key_value_row.dart';
-import '../../main.dart';
+import 'package:futru_scc_app/repositories/auth/check_auth_repository.dart';
 import '../../widgets/app_drawer.dart';
 
 // =============================================================================
 // PROFILE
 // =============================================================================
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
-    final isAdmin = appState.isAdmin;
+    final isAdmin = ref.read(checkAuthRepositoryStateProvider)!.user!.role;
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),
       drawer: const AppDrawer(),
@@ -33,7 +34,7 @@ class ProfileScreen extends StatelessWidget {
                         .textTheme
                         .titleLarge
                         ?.copyWith(fontWeight: FontWeight.w800)),
-                Text(isAdmin ? 'Administrator · St. Mary’s Parish' : 'Member · St. Mary’s Parish',
+                Text(isAdmin == "admin" ? 'Administrator · St. Mary’s Parish' : 'Member · St. Mary’s Parish',
                     style: Theme.of(context)
                         .textTheme
                         .bodyMedium

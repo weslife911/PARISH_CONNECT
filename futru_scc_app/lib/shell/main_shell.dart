@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import '../main.dart';
-import '../theme/theme.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:futru_scc_app/repositories/auth/check_auth_repository.dart';
+import 'package:futru_scc_app/shell/animated_bottom_nav_bar.dart';
+import 'package:futru_scc_app/shell/nav_item.dart';
 import '../screens/admin/admin_dashboard.dart';
 import '../screens/authorized/activities_screen.dart';
 import '../screens/authorized/home_screen.dart';
@@ -12,24 +14,27 @@ import '../widgets/app_drawer.dart';
 // MAIN SHELL + ANIMATED BOTTOM NAV
 // =============================================================================
 
-class MainShell extends StatefulWidget {
+class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key});
   @override
-  State<MainShell> createState() => _MainShellState();
+  ConsumerState<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> with TickerProviderStateMixin {
+class _MainShellState extends ConsumerState<MainShell> with TickerProviderStateMixin {
   int _index = 0;
   late final List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
-    final isAdmin = appState.isAdmin;
+    // FIX: Use null-aware operator (?.) to safely access the role.
+    // Default to false if the user object or repository state is null.
+    final isAdmin = ref.read(checkAuthRepositoryStateProvider)?.user?.role == "admin";
+    
     _pages = [
       const HomeScreen(),
       const ActivitiesScreen(),
-      if (isAdmin) const AdminDashboardScreen(),
+      if (isAdmin) const AdminDashboardScreen(), // Use isAdmin flag
       const ProfileScreen(),
       const SettingsScreen(),
     ];
@@ -37,13 +42,14 @@ class _MainShellState extends State<MainShell> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final isAdmin = appState.isAdmin;
+    final isAdmin = ref.watch(checkAuthRepositoryStateProvider)?.user?.role == "admin";
+    
     final items = [
-      _NavItem(icon: Icons.home_outlined, label: 'Home'),
-      _NavItem(icon: Icons.event_outlined, label: 'Activities'),
-      if (isAdmin) _NavItem(icon: Icons.dashboard_customize_outlined, label: 'Dashboard'),
-      _NavItem(icon: Icons.person_outline, label: 'Profile'),
-      _NavItem(icon: Icons.settings_outlined, label: 'Settings'),
+      NavItem(icon: Icons.home_outlined, label: 'Home'),
+      NavItem(icon: Icons.event_outlined, label: 'Activities'),
+      if (isAdmin) NavItem(icon: Icons.dashboard_customize_outlined, label: 'Dashboard'), // Use isAdmin flag
+      NavItem(icon: Icons.person_outline, label: 'Profile'),
+      NavItem(icon: Icons.settings_outlined, label: 'Settings'),
     ];
 
     // keep index within bounds if admin toggled state changed
@@ -68,103 +74,5 @@ class _MainShellState extends State<MainShell> with TickerProviderStateMixin {
   }
 }
 
-class _NavItem {
-  final IconData icon;
-  final String label;
-  _NavItem({required this.icon, required this.label});
-}
 
-class AnimatedBottomNavBar extends StatelessWidget {
-  const AnimatedBottomNavBar({
-    super.key,
-    required this.currentIndex,
-    required this.items,
-    required this.onTap,
-  });
-  final int currentIndex;
-  final List<_NavItem> items;
-  final ValueChanged<int> onTap;
 
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      height: 72,
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: AppShadows.soft(context),
-        border: Border.all(color: cs.outline.withValues(alpha: 0.15)),
-      ),
-      child: Row(
-        children: [
-          for (int i = 0; i < items.length; i++)
-            _AnimatedNavItem(
-              index: i,
-              selected: i == currentIndex,
-              item: items[i],
-              onTap: () => onTap(i),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AnimatedNavItem extends StatelessWidget {
-  const _AnimatedNavItem({
-    required this.index,
-    required this.selected,
-    required this.item,
-    required this.onTap,
-  });
-  final int index;
-  final bool selected;
-  final _NavItem item;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Expanded(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: selected
-                ? cs.primaryContainer.withValues(alpha: 0.7)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(item.icon,
-                  color: selected ? cs.onPrimaryContainer : cs.onSurfaceVariant),
-              AnimatedSize(
-                duration: const Duration(milliseconds: 250),
-                child: SizedBox(width: selected ? 8 : 0),
-              ),
-              AnimatedOpacity(
-                duration: const Duration(milliseconds: 250),
-                opacity: selected ? 1 : 0,
-                child: Text(
-                  selected ? item.label : '',
-                  overflow: TextOverflow.fade,
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelLarge
-                      ?.copyWith(color: cs.onPrimaryContainer, fontWeight: FontWeight.w700),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

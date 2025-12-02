@@ -1,25 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:futru_scc_app/components/auth/brand_button.dart';
-import '../../main.dart';
+import 'package:futru_scc_app/models/auth/auth_response_model.dart';
+import 'package:futru_scc_app/repositories/auth/auth_repository.dart';
+import 'package:futru_scc_app/widgets/helpers.dart';
+import 'package:toastification/toastification.dart';
 import '../../constants.dart';
 import '../../theme/theme.dart';
+import "package:futru_scc_app/main.dart";
 
 // =============================================================================
 // AUTH
 // =============================================================================
 
-class AuthScreen extends StatefulWidget {
+class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
 
   @override
-  State<AuthScreen> createState() => _AuthScreenState();
+  ConsumerState<AuthScreen> createState() => _AuthScreenState();
 }
 
-class _AuthScreenState extends State<AuthScreen>
+class _AuthScreenState extends ConsumerState<AuthScreen>
     with SingleTickerProviderStateMixin {
+  bool _isLoading = false;
+  AuthResponseModel? authResponseModel;
   final _formKey = GlobalKey<FormState>();
   bool _isLogin = true;
-  bool _loading = false;
   // Added controllers for full name and username
   final _fullName = TextEditingController();
   final _username = TextEditingController();
@@ -35,33 +41,97 @@ class _AuthScreenState extends State<AuthScreen>
 
   // --- End Deanery and Parish List and Selection ---
 
-  void _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+  void loginUser() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      // 1. Call the API
+      authResponseModel = await ref.read(authRepositoryProvider).loginUser(_email.text, _password.text);
+      
+      if(!mounted) {
+        return;
+      }
 
-    // Check if both deanery and parish are selected during Sign up
-    if (!_isLogin && (_selectedDeanery == null || _selectedParish == null)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select your deanery and parish.'),
-          duration: Duration(seconds: 2),
-        ),
+      // 2. Handle Response and Update AppState
+      final appStateNotifier = ref.read(appStateProvider.notifier);
+
+      if(mounted) {
+        showToast(context, authResponseModel!.message!, type: authResponseModel!.success ? ToastificationType.success : ToastificationType.error);
+      }
+      
+      if(authResponseModel?.success == true && authResponseModel!.token != null && authResponseModel!.token!.isNotEmpty) {
+        appStateNotifier.setLoggedIn(true);
+      } else {
+        appStateNotifier.setLoggedIn(false);
+      }
+      
+
+    } catch(e) {
+      if(mounted) {
+        showToast(context, e.toString(), type: ToastificationType.error);
+      }
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  void signupUser() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      // 1. Call the API
+      // Ensure _selectedDeanery and _selectedParish are not null before passing to the repository (Form validation should handle this)
+      authResponseModel = await ref.read(authRepositoryProvider).signupUser(
+        _fullName.text, 
+        _username.text, 
+        _selectedDeanery!, 
+        _selectedParish!, 
+        _email.text, 
+        _password.text
       );
-      return;
+      
+      if(!mounted) {
+        return;
+      }
+      
+      // 2. Handle Response and Update AppState
+      final appStateNotifier = ref.read(appStateProvider.notifier);
+
+      if(mounted) {
+        showToast(context, authResponseModel!.message!, type: authResponseModel!.success ? ToastificationType.success : ToastificationType.error);
+      }
+      
+      if(authResponseModel?.success == true && authResponseModel!.token != null && authResponseModel!.token!.isNotEmpty) {
+        appStateNotifier.setLoggedIn(true);
+      } else {
+        appStateNotifier.setLoggedIn(false);
+      }
+
+    } catch(e) {
+      if(mounted) {
+        showToast(context, e.toString(), type: ToastificationType.error);
+      }
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
-
-    setState(() => _loading = true);
-
-    if (_isLogin) {
-      // Logic for Login
-      print('Logging in with: ${_email.text} / ${_password.text}');
-    } else {
-      // Logic for Sign up
-      print(
-          'Signing up with: ${_fullName.text} / ${_username.text} / ${_email.text} / ${_password.text} / Deanery: $_selectedDeanery / Parish: $_selectedParish');
+  }
+  
+  // New function to handle form validation and submission
+  void _submitAuthForm() {
+    // Check if the form is valid first
+    if (_formKey.currentState!.validate()) {
+      if (_isLogin) {
+        loginUser();
+      } else {
+        signupUser();
+      }
     }
-
-    await Future.delayed(const Duration(milliseconds: 900));
-    appState.login(email: _email.text);
   }
 
   @override
@@ -113,11 +183,18 @@ class _AuthScreenState extends State<AuthScreen>
               ToggleButtons(
                 isSelected: [_isLogin, !_isLogin],
                 onPressed: (i) {
-                  // Reset selected deanery and parish when switching to Login
+                  // Reset selected deanery and parish when switching screens
                   if (i == 0) {
                     _selectedDeanery = null;
                     _selectedParish = null;
                   }
+                  // Also clear form fields when switching, which is often good practice
+                  _formKey.currentState?.reset();
+                  _fullName.clear();
+                  _username.clear();
+                  _email.clear();
+                  _password.clear();
+
                   setState(() => _isLogin = i == 0);
                 },
                 constraints: const BoxConstraints(minHeight: 40, minWidth: 100),
@@ -179,7 +256,7 @@ class _AuthScreenState extends State<AuthScreen>
                           prefixIcon: Icon(Icons.location_city_outlined),
                         ),
                         hint: const Text('Select your deanery'),
-                        items: _deaneryParishMap.keys.map((String deanery) {
+                        items: deaneryParishMap.keys.map((String deanery) {
                           return DropdownMenuItem<String>(
                             value: deanery,
                             child: Text(deanery),
@@ -273,8 +350,8 @@ class _AuthScreenState extends State<AuthScreen>
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton(
-                        onPressed: _loading ? null : _submit,
-                        child: _loading
+                        onPressed: _isLoading ? null : _submitAuthForm, 
+                        child: _isLoading
                             ? const SizedBox(
                                 width: 20,
                                 height: 20,
@@ -314,7 +391,7 @@ class _AuthScreenState extends State<AuthScreen>
                       color: const Color(0xFF4285F4),
                       icon: Icons.g_mobiledata,
                       label: 'Google',
-                      onTap: () => appState.login(email: 'google@user.com'),
+                      onTap: () {},
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -323,7 +400,7 @@ class _AuthScreenState extends State<AuthScreen>
                       color: const Color(0xFF1877F2),
                       icon: Icons.facebook,
                       label: 'Facebook',
-                      onTap: () => appState.login(email: 'fb@user.com'),
+                      onTap: () {},
                     ),
                   ),
                 ],
@@ -336,7 +413,7 @@ class _AuthScreenState extends State<AuthScreen>
                       color: Colors.black,
                       icon: Icons.apple,
                       label: 'Apple',
-                      onTap: () => appState.login(email: 'apple@user.com'),
+                      onTap: () {},
                     ),
                   ),
                 ],

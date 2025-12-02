@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:futru_scc_app/components/home/hero_header.dart';
 import '../../main.dart';
 import 'section_screen.dart';
@@ -13,12 +14,13 @@ import "package:futru_scc_app/components/home/quick_card.dart";
 // HOME
 // =============================================================================
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final isAdmin = appState.isAdmin;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appStateNotifier = ref.watch(appStateProvider.notifier);
+    final currentThemeMode = ref.watch(appStateProvider).themeMode;
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(
@@ -28,9 +30,11 @@ class HomeScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.wb_sunny_outlined, color: Colors.amber),
             onPressed: () {
-              appState.setThemeMode(appState.themeMode == ThemeMode.dark
-                  ? ThemeMode.light
-                  : ThemeMode.dark);
+              appStateNotifier.setThemeMode(
+                currentThemeMode == ThemeMode.dark
+                    ? ThemeMode.light
+                    : ThemeMode.dark,
+              );
             },
           ),
         ],
@@ -72,7 +76,6 @@ class HomeScreen extends StatelessWidget {
                 title: 'Deanery',
                 onTap: () => _openSection(context, 'Deanery'),
               ).animate(delay: 180.ms).fadeIn(duration: 300.ms).move(begin: const Offset(0, 10)),
-              if (isAdmin)
                 QuickCard(
                   icon: Icons.dashboard_customize_outlined,
                   title: 'Admin',

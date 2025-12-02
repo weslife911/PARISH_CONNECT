@@ -40,7 +40,6 @@ export const signupUser = async (req: Request, res: Response) => {
             full_name,
             username,
             email,
-            // Include new fields in user creation
             deanery, 
             parish,
             password: hashedPassword,
@@ -225,7 +224,10 @@ export const resetPassword = async(req: Request, res: Response) => {
 }
 
 export const checkAuth = (req: Request, res:Response) => {
-    return res.json(req.user);
+    return res.json({
+        success: true,
+        user: req.user
+    });
 }
 
 export const updateProfile = async(req: Request, res: Response) => {
@@ -239,7 +241,6 @@ export const updateProfile = async(req: Request, res: Response) => {
             full_name: full_name || req.user?.full_name,
             username: username || req.user?.username,
             email: email || req.user?.email,
-            SCC: SCC || req.user?.SCC,
             bio: bio || "",
             profile_pic: profile_pic || ""
         });

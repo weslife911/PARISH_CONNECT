@@ -1,5 +1,6 @@
 class ApiConfig {
-  final String apiBaseUrl = "futru-scc-server.onrender.com/api/v1";
+  final String apiBaseUrl = "futru-scc-server.onrender.com";
+  final String apiBasePath = "/api/v1";
 
   // AUTH
   final String loginUrl = "/login";
