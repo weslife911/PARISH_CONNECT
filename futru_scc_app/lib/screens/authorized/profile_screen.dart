@@ -55,7 +55,7 @@ class ProfileScreen extends ConsumerWidget {
                       style: Theme.of(context).textTheme.titleMedium),
                   SizedBox(height: 8),
                   KeyValueRow(icon: Icons.email, label: 'Email', value: user!.email),
-                  KeyValueRow(icon: Icons.place, label: 'Parish', value: user!.parish),
+                  KeyValueRow(icon: Icons.place, label: 'Parish', value: user.parish),
                 ],
               ),
             ),
