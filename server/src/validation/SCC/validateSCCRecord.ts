@@ -64,5 +64,5 @@ export const validateSCCRecord = z.object({
     problemsEncountered: requiredStringArray,
     proposedSolutions: requiredStringArray,
     issuesForCouncil: requiredStringArray,
-    nextMonthPlan: z.string().min(1, "Next Month Plan is required"),
+    nextMonthPlans: requiredStringArray,
 })

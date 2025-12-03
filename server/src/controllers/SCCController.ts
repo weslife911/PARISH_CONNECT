@@ -38,7 +38,7 @@ export const addSCCRecord = async(req: Request, res: Response) => {
             socialCommunicationActivities, socialWelfareActivities, educationActivities, 
             vocationActivities, dialogueActivities, womensAffairsActivities, 
             mensAffairsActivities, prayerAndActionActivities, problemsEncountered, 
-            proposedSolutions, issuesForCouncil, nextMonthPlan 
+            proposedSolutions, issuesForCouncil, nextMonthPlans
         } = validation.data;
         
         // --- 2. IMAGE UPLOAD LOGIC (REMOVED) ---
@@ -88,7 +88,7 @@ export const addSCCRecord = async(req: Request, res: Response) => {
             problemsEncountered,
             proposedSolutions,
             issuesForCouncil,
-            nextMonthPlan,
+            nextMonthPlans,
             // Removed: images: imageUrls 
         });
 

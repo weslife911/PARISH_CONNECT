@@ -63,7 +63,7 @@ const sccSchema = new Schema({
     problemsEncountered: { type: [String], required: true }, // Now required
     proposedSolutions: { type: [String], required: true }, // Now required
     issuesForCouncil: { type: [String], required: true }, // Now required
-    nextMonthPlan: { type: String, required: true },
+    nextMonthPlans: { type: [String], required: true },
 }, { timestamps: true });
 
 const SCC = model("SCC", sccSchema);
