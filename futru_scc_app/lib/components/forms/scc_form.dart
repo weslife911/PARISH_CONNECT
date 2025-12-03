@@ -89,31 +89,42 @@ class _SCCFormState extends ConsumerState<SCCForm> {
   // --- Navigation Logic ---
 
   void _nextStep() {
+    // DEBUG: Log current step and validation check
+    print('DEBUG SCCForm: Navigating from Step $_currentPage');
+
     // Validate the current form step first
-    if (!_formKeys[_currentPage].currentState!.validate()) return;
+    if (!_formKeys[_currentPage].currentState!.validate()) {
+      print('DEBUG SCCForm: Validation failed on current page ($_currentPage). Stopping navigation.');
+      return;
+    }
     
     // Custom validation for dates on the first step
     if (_currentPage == 0 && (_periodStart == null || _periodEnd == null)) {
       showToast(context, 'Please select the Period Covered (Start and End Date)', type: ToastificationType.error);
+      print('DEBUG SCCForm: Step 0 Date validation failed (Dates are null).');
       return;
     }
     
     // Custom validation for required List<String> fields 
-    // (This is primarily done in the TextFormField's validator, but a check here is safer)
+    // Biblical Apostolate is required on step 2 (index 2)
     if (_currentPage == 2) {
         if (_biblicalApostolateList.isEmpty) {
             showToast(context, 'Activities: Biblical Apostolate is required.', type: ToastificationType.error);
+            print('DEBUG SCCForm: Step 2 List validation failed (Biblical Apostolate is empty).');
             return;
         }
     }
+    // Problems Encountered is required on step 4 (index 4)
     if (_currentPage == 4) {
         if (_problemsList.isEmpty) {
             showToast(context, 'Problems Encountered is required.', type: ToastificationType.error);
+            print('DEBUG SCCForm: Step 4 List validation failed (Problems Encountered is empty).');
             return;
         }
     }
 
     if (_currentPage < _formKeys.length - 1) {
+      print('DEBUG SCCForm: Validation passed on Step $_currentPage. Moving to next page.');
       _pageController.nextPage(
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOutCubic,
@@ -123,6 +134,7 @@ class _SCCFormState extends ConsumerState<SCCForm> {
 
   void _previousStep() {
     if (_currentPage > 0) {
+      print('DEBUG SCCForm: Navigating back from Step $_currentPage.');
       _pageController.previousPage(
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOutCubic,
@@ -148,19 +160,39 @@ class _SCCFormState extends ConsumerState<SCCForm> {
         _periodStart = res.start;
         _periodEnd = res.end;
       });
+      print('DEBUG SCCForm: Dates selected: Start: $_periodStart, End: $_periodEnd');
     }
   }
 
   // --- Submission Logic ---
   Future<void> _saveForm() async {
     // Final validation before submission
-    if (!_formKeys[_currentPage].currentState!.validate()) return;
+    if (!_formKeys[_currentPage].currentState!.validate()) {
+      print('DEBUG SCCForm: Final validation failed on the last page before submission.');
+      return;
+    }
     
-    // Final check for required list fields on the last step
-    if (_problemsList.isEmpty || _nextMonthPlanController.text.isEmpty) {
-        showToast(context, 'Problems Encountered and Next Month Plan are required.', type: ToastificationType.error);
+    // Final check for required list fields and next month plan on the last step
+    if (_problemsList.isEmpty) {
+        showToast(context, 'Problems Encountered is a required field.', type: ToastificationType.error);
+        print('DEBUG SCCForm: Final check failed: Problems Encountered list is empty.');
         return;
     }
+    if (_nextMonthPlanController.text.isEmpty) {
+        showToast(context, 'Next Month Plan is a required field.', type: ToastificationType.error);
+        print('DEBUG SCCForm: Final check failed: Next Month Plan is empty.');
+        return;
+    }
+
+    // DEBUG: Log the collected non-list data before model creation
+    print('DEBUG SCCForm: --- REPORT SUBMISSION INITIATED ---');
+    print('DEBUG SCCForm: SCC Name: ${_sccNameController.text}');
+    print('DEBUG SCCForm: Period: $_periodStart to $_periodEnd');
+    print('DEBUG SCCForm: Total Families: ${_totalFamiliesController.text}');
+    print('DEBUG SCCForm: Total Membership: ${_totalMembershipController.text}');
+    print('DEBUG SCCForm: Biblical Apostolate Items: ${_biblicalApostolateList.length}');
+    print('DEBUG SCCForm: Problems Encountered Items: ${_problemsList.length}');
+    print('DEBUG SCCForm: Next Month Plan (Excerpt): ${_nextMonthPlanController.text.substring(0, _nextMonthPlanController.text.length > 30 ? 30 : _nextMonthPlanController.text.length)}');
 
 
     final newReport = SccReportModel(
@@ -207,8 +239,15 @@ class _SCCFormState extends ConsumerState<SCCForm> {
       issuesForCouncil: _issuesList,
       nextMonthPlan: _nextMonthPlanController.text,
     );
+    
+    // DEBUG: Print the JSON payload before sending
+    print('DEBUG SCCForm: Full JSON Payload: ${newReport.toJson()}');
 
     createSccRecordResponseModel = await ref.read(sccReportRepositoryProvider).createSCCReport(newReport);
+    
+    // DEBUG: Log the result from the repository
+    print('DEBUG SCCForm: Repository Response - Success: ${createSccRecordResponseModel!.success}, Message: ${createSccRecordResponseModel!.message}');
+
 
     if(mounted) {
       showToast(context, createSccRecordResponseModel!.message, type: createSccRecordResponseModel!.success == true ? ToastificationType.success : ToastificationType.error);
@@ -216,6 +255,7 @@ class _SCCFormState extends ConsumerState<SCCForm> {
     
     if(createSccRecordResponseModel!.success == true) {
       if(mounted) {
+        print('DEBUG SCCForm: Submission successful. Navigating to section page.');
         context.pushNamed(
           'section',
           extra: {
@@ -247,6 +287,7 @@ class _SCCFormState extends ConsumerState<SCCForm> {
         setState(() {
           list.add(item.trim());
           _controller.clear(); // Clear only this field's controller
+          print('DEBUG SCCForm: Added item to "$labelText" list. New length: ${list.length}');
         });
       }
     }
@@ -274,6 +315,7 @@ class _SCCFormState extends ConsumerState<SCCForm> {
                     setState(() {
                       list.remove(item);
                       inputKey.currentState?.validate(); // Re-validate after deletion
+                      print('DEBUG SCCForm: Removed item from "$labelText" list. New length: ${list.length}');
                     });
                   },
                 );
@@ -542,6 +584,7 @@ class _SCCFormState extends ConsumerState<SCCForm> {
             onPageChanged: (index) {
               setState(() {
                 _currentPage = index;
+                print('DEBUG SCCForm: PageView changed to Step $_currentPage.');
               });
             },
             itemBuilder: (context, index) {

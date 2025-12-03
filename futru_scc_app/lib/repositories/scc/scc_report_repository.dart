@@ -23,32 +23,51 @@ class SccReportRepository {
 
   Future<CreateSccRecordResponseModel> createSCCReport(SccReportModel report) async {
     final String baseUrl = ApiConfig().apiBaseUrl;
-    final remainingUrl = ApiConfig().apiBasePath + ApiConfig().getSCCRecordsUrl;
+    final remainingUrl = ApiConfig().apiBasePath + ApiConfig().addSCCRecordsUrl;
 
     final Uri url = Uri.https(baseUrl, remainingUrl);
     final Map<String, dynamic> requestBody = report.toJson();
+    final String? token = await _localStorageRepository.getJWTAuthToken(); // Get token once
+
+    // DEBUG: Log the final request details before sending
+    print('DEBUG SCCRepo: --- API CALL STARTED ---');
+    print('DEBUG SCCRepo: Request URL: $url');
+    print('DEBUG SCCRepo: HTTP Method: POST');
+    print('DEBUG SCCRepo: Authorization Token (Exists?): ${token!.isNotEmpty}');
+    print('DEBUG SCCRepo: Request Body (JSON): ${jsonEncode(requestBody).substring(0, 100)}...'); // Print first 100 chars
+
     try {
       final Response response = await _client.post(
         url,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${_localStorageRepository.getJWTAuthToken()}'
+          'Authorization': 'Bearer $token'
         },
         body: jsonEncode(requestBody)
       );
+
+      // DEBUG: Log the API response details
+      print('DEBUG SCCRepo: API Response Status Code: ${response.statusCode}');
+      print('DEBUG SCCRepo: API Response Body: ${response.body}');
+
       final jsonResponse = createSccRecordResponseModelFromJson(response.body);
+      
       if(response.statusCode == 200 || response.statusCode == 201) {
+        print('DEBUG SCCRepo: Request successful (Status ${response.statusCode}).');
         return CreateSccRecordResponseModel(
           success: jsonResponse.success,
           message: jsonResponse.message
         );
       } else {
+        print('DEBUG SCCRepo: Request failed (Status ${response.statusCode}).');
         return CreateSccRecordResponseModel(
           success: jsonResponse.success,
           message: jsonResponse.message
         );
       }
     } catch(e) {
+      // DEBUG: Log any exception during the network call
+      print('DEBUG SCCRepo: Network Exception: $e');
       return CreateSccRecordResponseModel(
         success: false,
         message: e.toString()
