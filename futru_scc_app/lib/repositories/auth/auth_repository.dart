@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:futru_scc_app/config/api_config.dart';
 import 'package:futru_scc_app/models/auth/auth_response_model.dart';
 import 'package:futru_scc_app/repositories/storage/local_storage_repository.dart';
+import 'package:futru_scc_app/utils/logger_util.dart'; // ADDED: Logger utility
 import 'package:http/http.dart';
 
 final authRepositoryProvider = Provider((ref) => AuthRepository(
@@ -29,9 +30,7 @@ class AuthRepository {
       "email": email,
       "password": password
     });
-    print('--- Login Request ---');
-    print('URL: $url');
-    print('Body: $body');
+    logger.d('Login Request (URL: $url, Body: $body)'); // FIXED and consolidated
     // ------------------------------------------
     
     final response = await _client.post(
@@ -44,9 +43,7 @@ class AuthRepository {
     
     try {
       // --- Debugging: Log response info ---
-      print('--- Login Response ---');
-      print('Status Code: ${response.statusCode}');
-      print('Response Body: ${response.body}');
+      logger.d('Login Response (Status: ${response.statusCode}, Body: ${response.body})'); // FIXED and consolidated
       // ------------------------------------
 
       final jsonResponse = authResponseModelFromJson(response.body);
@@ -66,8 +63,7 @@ class AuthRepository {
       }
     } catch(e) {
       // --- Debugging: Log error on failure ---
-      print('--- Login Error ---');
-      print('Exception caught: $e');
+      logger.e('Login Error: Exception caught.', error: e); // FIXED (Using logger.e and error parameter)
       // ---------------------------------------
       return AuthResponseModel(
         success: false,
@@ -91,9 +87,7 @@ class AuthRepository {
       "parish": parish,
       "password": password
     });
-    print('--- Signup Request ---');
-    print('URL: $url');
-    print('Body: $body');
+    logger.d('Signup Request (URL: $url, Body: $body)'); // FIXED and consolidated
     // -------------------------------------------
     
     final response = await _client.post(
@@ -106,9 +100,7 @@ class AuthRepository {
     
     try {
       // --- Debugging: Log response info ---
-      print('--- Signup Response ---');
-      print('Status Code: ${response.statusCode}');
-      print('Response Body: ${response.body}');
+      logger.d('Signup Response (Status: ${response.statusCode}, Body: ${response.body})'); // FIXED and consolidated
       // ------------------------------------
 
       final jsonResponse = authResponseModelFromJson(response.body);
@@ -128,8 +120,7 @@ class AuthRepository {
       }
     } catch(e) {
       // --- Debugging: Log error on failure ---
-      print('--- Signup Error ---');
-      print('Exception caught: $e');
+      logger.e('Signup Error: Exception caught.', error: e); // FIXED (Using logger.e and error parameter)
       // ---------------------------------------
       return AuthResponseModel(
         success: false,

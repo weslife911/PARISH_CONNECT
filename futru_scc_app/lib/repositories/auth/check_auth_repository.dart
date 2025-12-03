@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:futru_scc_app/config/api_config.dart';
 import 'package:futru_scc_app/models/auth/check_auth_response_model.dart';
 import 'package:futru_scc_app/repositories/storage/local_storage_repository.dart';
+import 'package:futru_scc_app/utils/logger_util.dart'; // ADDED: Logger utility
 import "package:http/http.dart";
 
 final checkAuthRepositoryProvider = Provider((ref) => CheckAuthRepository(
@@ -24,18 +25,18 @@ class CheckAuthRepository {
 
   Future<CheckAuthResponseModel> checkAuth() async {
     // -------------------------------------------------------------------
-    print('DEBUG: Starting checkAuth() process...');
+    logger.d('Starting checkAuth() process...'); // FIXED
     // -------------------------------------------------------------------
     final ApiConfig config = ApiConfig();
     final String path = config.apiBasePath + config.checkAuthUrl;
     final Uri url = Uri.https(config.apiBaseUrl, path);
-    print('DEBUG: Constructed URL: $url');
+    logger.d('Constructed URL: $url'); // FIXED
     
     final jwtAuthToken = await _localStorageRepository.getJWTAuthToken();
     
     // Check if a token exists locally before making the request
     if (jwtAuthToken == null || jwtAuthToken.isEmpty) {
-      print('DEBUG: No JWT token found in local storage. Returning failure.');
+      logger.i('No JWT token found in local storage. Returning failure.'); // FIXED
       return CheckAuthResponseModel(
         success: false,
         message: "No authentication token found. Please log in.",
@@ -43,7 +44,7 @@ class CheckAuthRepository {
       );
     }
     
-    print('DEBUG: JWT Token retrieved (first 10 chars): ${jwtAuthToken.substring(0, 10)}...');
+    logger.d('JWT Token retrieved (first 10 chars): ${jwtAuthToken.substring(0, 10)}...'); // FIXED
     
     try {
       final response = await _client.get(
@@ -54,13 +55,13 @@ class CheckAuthRepository {
       );
 
       // -------------------------------------------------------------------
-      print('DEBUG: API call completed. Status Code: ${response.statusCode}');
+      logger.d('API call completed. Status Code: ${response.statusCode}'); // FIXED
       // -------------------------------------------------------------------
 
       // Explicitly handle 401 Unauthorized (Token expired/invalid)
       if (response.statusCode == 401) {
         await _localStorageRepository.removeJWTAuthToken(); 
-        print('DEBUG: Status 401 received. Token cleared and returning session expired message.');
+        logger.w('Status 401 received. Token cleared and returning session expired message.'); // FIXED
         return CheckAuthResponseModel(
           success: false,
           message: "Session expired or invalid. Please log in again.",
@@ -72,7 +73,7 @@ class CheckAuthRepository {
       
       if(response.statusCode == 200 || response.statusCode == 201) {
         // -------------------------------------------------------------------
-        print('DEBUG: Status ${response.statusCode}. Auth check SUCCESS. User role: ${jsonResponse.user?.role}');
+        logger.i('Status ${response.statusCode}. Auth check SUCCESS. User role: ${jsonResponse.user?.role}'); // FIXED
         // -------------------------------------------------------------------
         return CheckAuthResponseModel(
           success: jsonResponse.success,
@@ -81,7 +82,7 @@ class CheckAuthRepository {
         );
       } else {
         // -------------------------------------------------------------------
-        print('DEBUG: Status ${response.statusCode}. Auth check FAILURE. Message: ${jsonResponse.message}');
+        logger.w('Status ${response.statusCode}. Auth check FAILURE. Message: ${jsonResponse.message}'); // FIXED
         // -------------------------------------------------------------------
         return CheckAuthResponseModel(
           success: jsonResponse.success,
@@ -91,7 +92,7 @@ class CheckAuthRepository {
       }
     } catch(e) {
       // -------------------------------------------------------------------
-      print('ERROR: An exception occurred during checkAuth: ${e.toString()}');
+      logger.e('An exception occurred during checkAuth: ${e.toString()}', error: e); // FIXED (Using logger.e and error parameter)
       // -------------------------------------------------------------------
       return CheckAuthResponseModel(
         success: false,

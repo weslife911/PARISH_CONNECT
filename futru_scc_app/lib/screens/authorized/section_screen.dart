@@ -2,10 +2,10 @@
 
 import 'package:flutter/material.dart';
 // REMOVED: import 'package:futru_scc_app/components/section/list_tab.dart';
-import 'package:futru_scc_app/widgets/build_add_new_form.dart';
-import 'package:futru_scc_app/widgets/build_overview_tab.dart';
+import 'package:futru_scc_app/widgets/builds/build_add_new_form.dart';
+import 'package:futru_scc_app/widgets/builds/build_overview_tab.dart';
 // NEW IMPORT:
-import 'package:futru_scc_app/widgets/build_list_tab.dart'; 
+import 'package:futru_scc_app/widgets/builds/build_list_tab.dart'; 
 
 import '../../widgets/app_drawer.dart';
 

@@ -19,13 +19,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final PageController _controller = PageController();
   int _index = 0;
 
-  void _next() {
+  void _next() async {
     if (_index < 2) {
       _controller.nextPage(
           duration: const Duration(milliseconds: 450),
           curve: Curves.easeOutCubic);
     } else {
-      ref.read(appStateProvider).completeOnboarding();
+      // Mark onboarding as completed and save to SharedPreferences
+      await ref.read(appStateProvider.notifier).completeOnboarding();
     }
   }
 

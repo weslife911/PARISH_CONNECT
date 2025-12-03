@@ -2,26 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:futru_scc_app/components/section/list_tab.dart';
 
 /// Returns the appropriate List widget based on the section title.
-/// 
-/// For now, all sections use the same ListTab which handles filtering
-/// but this structure allows for future specialization (e.g., using 
-/// SCCListTab, ParishListTab, etc., for unique layouts).
 Widget buildListTab(String sectionTitle, List<String> items) {
-  // Use a switch statement for clear selection logic
+  // For 'SCC', 'Parish', and 'Deanery', we pass an empty list because the data
+  // is fetched internally by ListTab using Riverpod FutureProviders.
+  
   switch (sectionTitle.toLowerCase()) {
     case 'scc':
-      return ListTab(
-        items: items,
+      return const ListTab(
+        items: [], 
         sectionTitle: 'SCC',
       );
     case 'parish':
-      return ListTab(
-        items: items,
+      return const ListTab(
+        items: [], // Data fetched via provider
         sectionTitle: 'Parish',
       );
     case 'deanery':
-      return ListTab(
-        items: items,
+      return const ListTab(
+        items: [], // Data fetched via provider
         sectionTitle: 'Deanery',
       );
     // Default case: handles Mission Stations or any other generic title

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:futru_scc_app/theme/theme.dart';
 import "package:futru_scc_app/repositories/auth/check_auth_repository.dart";
+import 'package:futru_scc_app/utils/logger_util.dart';
 
 class HeroHeader extends ConsumerWidget {
   const HeroHeader({super.key});
@@ -11,7 +12,8 @@ class HeroHeader extends ConsumerWidget {
     final checkAuthState = ref.watch(checkAuthRepositoryStateProvider);
     final user = checkAuthState?.user;
     
-    print('DEBUG: HeroHeader: Building. checkAuthState success: ${checkAuthState?.success}. User is null: ${user == null}'); 
+    // Replaced print with logger
+    logger.d('HeroHeader: Building. checkAuthState success: ${checkAuthState?.success}. User is null: ${user == null}'); 
 
     // FIX: Add explicit null check to prevent crash (the cause of 'state still shows null in hero_header')
     if (user == null) {
@@ -28,7 +30,8 @@ class HeroHeader extends ConsumerWidget {
     }
 
     // Safely use user's data now that we know it's not null
-    print('DEBUG: HeroHeader: User data found. Parish: ${user.parish}');
+    // Replaced print with logger
+    logger.d('HeroHeader: User data found. Parish: ${user.parish}');
 
     return Container(
       height: 180,

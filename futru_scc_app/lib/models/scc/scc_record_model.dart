@@ -52,7 +52,7 @@ class SccReportModel {
   final List<String> problemsEncountered; // From "Problems Encountered and Proposed Solutions" 
   final List<String> proposedSolutions; // Extracted from "Problems Encountered and Proposed Solutions"
   final List<String> issuesForCouncil; // From "Issues to be discussed in the Council" 
-  final String nextMonthPlan; // From "Plan for the next Month" 
+  final List<String> nextMonthPlans; // From "Plan for the next Month" 
 
   SccReportModel({
     required this.sccName,
@@ -95,7 +95,7 @@ class SccReportModel {
     required this.problemsEncountered,
     required this.proposedSolutions,
     required this.issuesForCouncil,
-    required this.nextMonthPlan,
+    required this.nextMonthPlans,
   });
 
   // --- JSON Serialization ---
@@ -148,7 +148,7 @@ class SccReportModel {
         problemsEncountered: List<String>.from(json["problemsEncountered"].map((x) => x)),
         proposedSolutions: List<String>.from(json["proposedSolutions"].map((x) => x)),
         issuesForCouncil: List<String>.from(json["issuesForCouncil"].map((x) => x)),
-        nextMonthPlan: json["nextMonthPlan"],
+        nextMonthPlans: List<String>.from(json["nextMonthPlans"].map((x) => x)),
       );
 
   Map<String, dynamic> toJson() => {
@@ -196,6 +196,6 @@ class SccReportModel {
         "problemsEncountered": List<dynamic>.from(problemsEncountered.map((x) => x)),
         "proposedSolutions": List<dynamic>.from(proposedSolutions.map((x) => x)),
         "issuesForCouncil": List<dynamic>.from(issuesForCouncil.map((x) => x)),
-        "nextMonthPlan": nextMonthPlan,
+        "nextMonthPlans": List<dynamic>.from(nextMonthPlans.map((x) => x)),
       };
 }

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:futru_scc_app/components/section/stat_chip.dart';
 import 'package:futru_scc_app/widgets/helpers.dart';
 import 'package:toastification/toastification.dart';
 
-class SCCOverviewTab extends StatelessWidget {
+class SCCOverviewTab extends ConsumerWidget {
   const SCCOverviewTab({super.key, required this.title});
   final String title;
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -25,17 +26,20 @@ class SCCOverviewTab extends StatelessWidget {
                         ?.copyWith(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 12),
                 Row(
-                  children: [
-                    // Wrap each StatChip in an Expanded widget
-                    const Expanded(
+                  // Set the spacing property to handle the gaps
+                  // and remove the separate SizedBox widgets
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: const [
+                    // The children are expanded to take equal space
+                    Expanded(
                       child: StatChip(icon: Icons.people_outline, label: 'Members', value: '124'),
                     ),
-                    const SizedBox(width: 12),
-                    const Expanded(
+                    SizedBox(width: 12), // Keep fixed spacing
+                    Expanded(
                       child: StatChip(icon: Icons.description_outlined, label: 'Docs', value: '37'),
                     ),
-                    const SizedBox(width: 12),
-                    const Expanded(
+                    SizedBox(width: 12), // Keep fixed spacing
+                    Expanded(
                       child: StatChip(icon: Icons.history, label: 'Activities', value: '12'),
                     ),
                   ],

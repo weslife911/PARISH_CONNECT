@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import "package:futru_scc_app/theme/theme.dart";
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:rive/rive.dart' as rive;
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -46,9 +45,11 @@ class SplashScreen extends StatelessWidget {
                     boxShadow: AppShadows.soft(context),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: const rive.RiveAnimation.asset(
-                    "assets/rive/vehicles.riv",
-                    fit: BoxFit.cover,
+                  child: const Center(
+                    child: Text(
+                      '⛪',
+                      style: TextStyle(fontSize: 80),
+                    ),
                   ),
                 ).animate().scale(duration: 450.ms, curve: Curves.easeOutBack),
                 const SizedBox(height: 18),

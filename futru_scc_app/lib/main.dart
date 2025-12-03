@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // This line is crucial
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:futru_scc_app/config/route_config.dart';
 import 'package:toastification/toastification.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'theme/theme.dart';
 
 void main() {
@@ -16,26 +17,37 @@ void main() {
 // =============================================================================
 
 // Provider for AppState
-final appStateProvider = ChangeNotifierProvider<AppState>((ref) => AppState()); // ChangeNotifierProvider is now defined due to the import.
+final appStateProvider = ChangeNotifierProvider<AppState>((ref) => AppState());
 
 class AppState extends ChangeNotifier {
   bool _initialized = false;
   bool _showOnboarding = true;
   ThemeMode _themeMode = ThemeMode.system;
-  // New: Logged-in state is needed for RootNavigator logic
-  bool _loggedIn = false; 
+  bool _loggedIn = false;
+  
+  // Key for SharedPreferences
+  static const String _onboardingKey = 'has_seen_onboarding';
 
   bool get initialized => _initialized;
   bool get showOnboarding => _showOnboarding;
   ThemeMode get themeMode => _themeMode;
-  bool get loggedIn => _loggedIn; // Getter for loggedIn state
+  bool get loggedIn => _loggedIn;
+
+  // Load onboarding status from SharedPreferences
+  Future<void> loadOnboardingStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    _showOnboarding = !(prefs.getBool(_onboardingKey) ?? false);
+    notifyListeners();
+  }
 
   void finishInit() {
     _initialized = true;
     notifyListeners();
   }
 
-  void completeOnboarding() {
+  Future<void> completeOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_onboardingKey, true);
     _showOnboarding = false;
     notifyListeners();
   }
@@ -51,13 +63,12 @@ class AppState extends ChangeNotifier {
   }
 }
 
-class ChurchAdminApp extends ConsumerWidget { // Changed to ConsumerWidget
+class ChurchAdminApp extends ConsumerWidget {
   const ChurchAdminApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) { // Added WidgetRef
-    // Use ref.watch to rebuild when themeMode changes
-    final appState = ref.watch(appStateProvider); 
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appState = ref.watch(appStateProvider);
 
     return ToastificationWrapper(
       child: MaterialApp.router(
@@ -65,7 +76,7 @@ class ChurchAdminApp extends ConsumerWidget { // Changed to ConsumerWidget
         debugShowCheckedModeBanner: false,
         theme: lightTheme,
         darkTheme: darkTheme,
-        themeMode: appState.themeMode, // Access via Riverpod state
+        themeMode: appState.themeMode,
         routerConfig: appRouter,
       ),
     );
