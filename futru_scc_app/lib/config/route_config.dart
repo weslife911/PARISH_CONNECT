@@ -4,6 +4,7 @@ import 'package:futru_scc_app/screens/auth/auth_screen.dart';
 import 'package:futru_scc_app/screens/authorized/activities_screen.dart';
 import 'package:futru_scc_app/screens/authorized/home_screen.dart';
 import 'package:futru_scc_app/screens/authorized/profile_screen.dart';
+import 'package:futru_scc_app/screens/authorized/section_screen.dart';
 import 'package:futru_scc_app/screens/authorized/settings_screen.dart';
 import 'package:go_router/go_router.dart';
 
@@ -48,6 +49,23 @@ final GoRouter appRouter = GoRouter(
       path: "/activities",
       name: "activities",
       builder: (context, state) => ActivitiesScreen(),
+    ),
+
+    GoRoute(
+      path: "/section",
+      name: "section",
+      builder: (context, state) {
+        final args = state.extra as Map<String, dynamic>?;
+
+        final title = args?['title'] as String? ?? 'SCC'; 
+        
+        final initialIndex = args?['initialTabIndex'] as int? ?? 0;
+        
+        return SectionScreen(
+          title: title,
+          initialTabIndex: initialIndex,
+        );
+      },
     ),
 
     // ADMIN

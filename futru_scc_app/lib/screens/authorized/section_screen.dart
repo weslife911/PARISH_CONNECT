@@ -1,7 +1,12 @@
+// section_screen.dart
+
 import 'package:flutter/material.dart';
-import 'package:futru_scc_app/components/section/add_new_form.dart';
-import 'package:futru_scc_app/components/section/list_tab.dart';
-import 'package:futru_scc_app/components/section/overview_tab.dart';
+// REMOVED: import 'package:futru_scc_app/components/section/list_tab.dart';
+import 'package:futru_scc_app/widgets/build_add_new_form.dart';
+import 'package:futru_scc_app/widgets/build_overview_tab.dart';
+// NEW IMPORT:
+import 'package:futru_scc_app/widgets/build_list_tab.dart'; 
+
 import '../../widgets/app_drawer.dart';
 
 // =============================================================================
@@ -9,15 +14,49 @@ import '../../widgets/app_drawer.dart';
 // =============================================================================
 
 class SectionScreen extends StatefulWidget {
-  const SectionScreen({super.key, required this.title});
+  // MODIFIED: Added optional initialTabIndex, defaulting to 0 (Overview)
+  const SectionScreen({
+    super.key, 
+    required this.title, 
+    this.initialTabIndex = 0,
+  });
+  
   final String title;
+  final int initialTabIndex; // New field to store the initial tab index
+
   @override
   State<SectionScreen> createState() => _SectionScreenState();
 }
 
 class _SectionScreenState extends State<SectionScreen>
     with SingleTickerProviderStateMixin {
-  late final TabController _tab = TabController(length: 3, vsync: this);
+  // MODIFIED: Changed initialization to happen in initState
+  late final TabController _tab; 
+
+  // DUMMY DATA: This data is for the entire app, ListTab will now filter it.
+  final List<String> sections = const [
+    'St. Anthony SCC',
+    'St. Jude SCC',
+    'Holy Family Parish',
+    'St. Peter Mission Station',
+    'St. Michael Deanery',
+    'St. Leo SCC',
+    'St. Mark Parish',
+    'Our Lady of Fatima SCC',
+    'Divine Mercy SCC',
+    'St. Paul Parish',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    // MODIFIED: Initialize TabController using the initialTabIndex from the widget
+    _tab = TabController(
+      length: 3, 
+      vsync: this,
+      initialIndex: widget.initialTabIndex, // Use the new parameter
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +73,7 @@ class _SectionScreenState extends State<SectionScreen>
               decoration: BoxDecoration(
                 color: cs.surface,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: cs.outline.withValues(alpha: 0.15)),
+                border: Border.all(color: cs.outline.withOpacity(0.15)),
               ),
               child: TabBar(
                 controller: _tab,
@@ -62,18 +101,11 @@ class _SectionScreenState extends State<SectionScreen>
       body: TabBarView(
         controller: _tab,
         children: [
-          OverviewTab(title: widget.title),
-          const ListTab(),
-          AddNewForm(section: widget.title),
+          buildOverviewTab(widget.title),
+          buildListTab(widget.title, sections),
+          buildAddNewForm(widget.title)
         ],
       ),
     );
   }
 }
-
-
-
-
-
-
-

@@ -3,8 +3,8 @@ import 'package:futru_scc_app/components/section/stat_chip.dart';
 import 'package:futru_scc_app/widgets/helpers.dart';
 import 'package:toastification/toastification.dart';
 
-class OverviewTab extends StatelessWidget {
-  const OverviewTab({super.key, required this.title});
+class ParishOverviewTab extends StatelessWidget {
+  const ParishOverviewTab({super.key, required this.title});
   final String title;
   @override
   Widget build(BuildContext context) {
@@ -25,12 +25,18 @@ class OverviewTab extends StatelessWidget {
                         ?.copyWith(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 12),
                 Row(
-                  children: [
-                    const StatChip(icon: Icons.people_outline, label: 'Members', value: '124'),
-                    const SizedBox(width: 12),
-                    const StatChip(icon: Icons.description_outlined, label: 'Docs', value: '37'),
-                    const SizedBox(width: 12),
-                    const StatChip(icon: Icons.history, label: 'Activities', value: '12'),
+                  children: const [
+                    Expanded(
+                      child: StatChip(icon: Icons.people_outline, label: 'Members', value: '124'),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: StatChip(icon: Icons.description_outlined, label: 'Docs', value: '37'),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: StatChip(icon: Icons.history, label: 'Activities', value: '12'),
+                    ),
                   ],
                 ),
               ],

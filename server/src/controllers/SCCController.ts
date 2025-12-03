@@ -3,27 +3,18 @@
 import SCC from "../models/SCC";
 import { Request, Response } from "express"
 import { validateSCCRecord } from "../validation/SCC/validateSCCRecord";
-import cloudinary from "../config/cloudinary";
+// Removed: import cloudinary from "../config/cloudinary";
 
-// Define the structure of the incoming Base64 image data
-interface Base64ImagePayload {
-    base64: string;
-    mimeType: string;
-}
+// Removed: interface Base64ImagePayload 
 
 export const addSCCRecord = async(req: Request, res: Response) => {
     try {
         
-        // Extract the Base64 images array from the JSON request body
-        const images: Base64ImagePayload[] | undefined = req.body.images;
+        // Removed: Image extraction logic (const images: Base64ImagePayload[]...)
 
+        // Validation data now directly maps to the SccReportModel fields.
         const transformedBody = {
             ...req.body,
-            menAttendance: req.body.menAttendance ? Number(req.body.menAttendance) : undefined,
-            womenAttendance: req.body.womenAttendance ? Number(req.body.womenAttendance) : undefined,
-            youthAttendance: req.body.youthAttendance ? Number(req.body.youthAttendance) : undefined,
-            catechumenAttendance: req.body.catechumenAttendance ? Number(req.body.catechumenAttendance) : undefined,
-            totalOfferings: req.body.totalOfferings ? Number(req.body.totalOfferings) : undefined,
         };
 
         const validation = validateSCCRecord.safeParse(transformedBody);
@@ -35,46 +26,70 @@ export const addSCCRecord = async(req: Request, res: Response) => {
             });
         }
 
-        const { sccName, faithSharingName, host, date, officiatingPriestName, menAttendance, womenAttendance, youthAttendance, catechumenAttendance, wordOfLife, totalOfferings, task, nextHost } = validation.data;
+        // Destructure ALL validated fields
+        const { 
+            sccName, periodStart, periodEnd, totalFamilies, gospelSharingGroups, 
+            councilMeetings, generalMeetings, noOfCommissions, activeCommissions, 
+            totalMembership, gospelSharingExpected, gospelSharingDone, noChristiansAttendingGS, 
+            gsAttendancePercentage, children, youth, adults, baptism, lapsedChristians, 
+            irregularMarriages, burials, biblicalApostolateActivities, liturgyActivities, 
+            financeActivities, familyLifeActivities, justiceAndPeaceActivities, 
+            youthApostolateActivities, catecheticalActivities, healthCareActivities, 
+            socialCommunicationActivities, socialWelfareActivities, educationActivities, 
+            vocationActivities, dialogueActivities, womensAffairsActivities, 
+            mensAffairsActivities, prayerAndActionActivities, problemsEncountered, 
+            proposedSolutions, issuesForCouncil, nextMonthPlan 
+        } = validation.data;
         
-        // --- 2. IMAGE UPLOAD LOGIC (MODIFIED for Base64) ---
-        let imageUrls: string[] = [];
+        // --- 2. IMAGE UPLOAD LOGIC (REMOVED) ---
+        // Removed: let imageUrls: string[] = [];
+        // Removed: if (images && images.length > 0) { ... upload logic ... }
         
-        if (images && images.length > 0) {
-            
-            // Function to upload a single Base64 string to Cloudinary
-            const uploadBase64ToCloudinary = async (image: Base64ImagePayload): Promise<string> => {
-                // Cloudinary accepts a data URI string: data:[<Mime-type>][;base64],<data>
-                const dataUri = `data:${image.mimeType};base64,${image.base64}`;
-                
-                const result = await cloudinary.uploader.upload(dataUri, {
-                    folder: "scc-records" // Folder for organization in Cloudinary
-                });
-                return result.secure_url;
-            };
-
-            // Upload images to Cloudinary concurrently using Promise.all
-            const uploadPromises = images.map(uploadBase64ToCloudinary);
-            imageUrls = await Promise.all(uploadPromises);
-        }
-        
-        // --- 3. RECORD CREATION ---
+        // --- 3. RECORD CREATION (Using ALL new fields) ---
 
         const record = await SCC.create({
             sccName,
-            faithSharingName,
-            host,
-            date,
-            officiatingPriestName,
-            menAttendance: menAttendance ?? 0, 
-            womenAttendance: womenAttendance ?? 0,
-            youthAttendance: youthAttendance ?? 0,
-            catechumenAttendance: catechumenAttendance ?? 0,
-            wordOfLife,
-            totalOfferings: totalOfferings ?? 0, 
-            task,
-            nextHost,
-            images: imageUrls
+            periodStart: new Date(periodStart), // Convert string to Date
+            periodEnd: new Date(periodEnd), // Convert string to Date
+            totalFamilies,
+            gospelSharingGroups,
+            councilMeetings,
+            generalMeetings,
+            noOfCommissions,
+            activeCommissions,
+            totalMembership,
+            gospelSharingExpected,
+            gospelSharingDone,
+            noChristiansAttendingGS,
+            gsAttendancePercentage,
+            children,
+            youth,
+            adults,
+            baptism,
+            lapsedChristians,
+            irregularMarriages,
+            burials,
+            biblicalApostolateActivities,
+            liturgyActivities,
+            financeActivities,
+            familyLifeActivities,
+            justiceAndPeaceActivities,
+            youthApostolateActivities,
+            catecheticalActivities,
+            healthCareActivities,
+            socialCommunicationActivities,
+            socialWelfareActivities,
+            educationActivities,
+            vocationActivities,
+            dialogueActivities,
+            womensAffairsActivities,
+            mensAffairsActivities,
+            prayerAndActionActivities,
+            problemsEncountered,
+            proposedSolutions,
+            issuesForCouncil,
+            nextMonthPlan,
+            // Removed: images: imageUrls 
         });
 
         if(!record) return res.status(500).json({
@@ -82,18 +97,18 @@ export const addSCCRecord = async(req: Request, res: Response) => {
             message: "Error while creating record in database"
         });
 
+        // SUCCESS RESPONSE FORMAT
         return res.status(201).json({
             success: true,
-            message: "Record created successfully!",
-            record
+            message: "Record created successfully!"
         });
 
     } catch (e: any) {
         console.error("Add SCC Record error:", e);
-        // Handle specific Cloudinary error if needed, or return a general 500 error
+        // Changed message to reflect no file upload is occurring
         return res.status(500).json({
             success: false,
-            message: "Internal server error during record creation or file upload",
+            message: "Internal server error during record creation",
             error: e instanceof Error ? e.message : "An unknown error occurred"
         });
     }
@@ -104,13 +119,15 @@ export const getSCCRecords = async(req: Request, res: Response) => {
 
         const records = await SCC.find({});
 
-        if(!records) return res.json({
+        if(!records || records.length === 0) return res.json({
             success: false,
             message: "No SCC Records found"
         });
 
+        // RESPONSE FORMAT
         return res.status(200).json({
             success: true,
+            message: "Records fetched successfully.",
             records
         });
 
@@ -136,8 +153,10 @@ export const getSCCRecord = async(req: Request, res: Response) => {
             message: "Record with given ID does not exist!"
         })
 
+        // RESPONSE FORMAT
         return res.status(200).json({
             success: true,
+            message: "Record fetched successfully.",
             record
         });
 

@@ -1,20 +1,32 @@
+// scc_form.dart
+
 import 'package:flutter/material.dart';
 import 'package:futru_scc_app/widgets/helpers.dart';
 import 'package:toastification/toastification.dart';
 
-class AddNewForm extends StatefulWidget {
-  const AddNewForm({super.key, required this.section});
-  final String section;
+class ParishForm extends StatefulWidget {
+  // Removed final String section;
+  const ParishForm({super.key}); 
+  
   @override
-  State<AddNewForm> createState() => _AddNewFormState();
+  State<ParishForm> createState() => _ParishFormState();
 }
 
-class _AddNewFormState extends State<AddNewForm> {
+class _ParishFormState extends State<ParishForm> { // Renamed state class for consistency
   final _form = GlobalKey<FormState>();
   final _name = TextEditingController();
+  // Controller for 'Function' is now permanent
+  final _function = TextEditingController(); 
   DateTime? _date;
   String? _status;
   String? _location;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _function.dispose(); 
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +46,18 @@ class _AddNewFormState extends State<AddNewForm> {
               validator: (v) => v == null || v.isEmpty ? 'Required' : null,
             ),
             const SizedBox(height: 12),
+            
+            // This 'Function' field is now always present for SCCForm
+            TextFormField(
+              controller: _function,
+              decoration: const InputDecoration(
+                labelText: 'Function',
+                prefixIcon: Icon(Icons.settings_suggest_outlined),
+              ),
+              validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+            ),
+            const SizedBox(height: 12),
+            
             DropdownButtonFormField<String>(
               value: _status,
               decoration: const InputDecoration(
@@ -46,6 +70,7 @@ class _AddNewFormState extends State<AddNewForm> {
               ],
               onChanged: (v) => setState(() => _status = v),
             ),
+            // ... rest of the form fields remain the same ...
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               value: _location,
@@ -93,7 +118,11 @@ class _AddNewFormState extends State<AddNewForm> {
               child: FilledButton(
                 onPressed: () {
                   if (_form.currentState!.validate()) {
-                    showToast(context, 'Submitted successfully', type: ToastificationType.success);
+                    String functionValue = _function.text; 
+                    showToast(context, 
+                      'Submitted successfully. Section: SCC, Function: $functionValue', 
+                      type: ToastificationType.success
+                    );
                   }
                 },
                 child: const Text('Submit'),

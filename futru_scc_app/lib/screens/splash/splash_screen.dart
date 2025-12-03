@@ -46,8 +46,8 @@ class SplashScreen extends StatelessWidget {
                     boxShadow: AppShadows.soft(context),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: const rive.RiveAnimation.network(
-                    "https://cdn.rive.app/animations/vehicles.riv",
+                  child: const rive.RiveAnimation.asset(
+                    "assets/rive/vehicles.riv",
                     fit: BoxFit.cover,
                   ),
                 ).animate().scale(duration: 450.ms, curve: Curves.easeOutBack),

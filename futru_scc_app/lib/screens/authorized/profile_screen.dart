@@ -31,12 +31,12 @@ class ProfileScreen extends ConsumerWidget {
                   child: Icon(Icons.person, size: 44, color: cs.onPrimaryContainer),
                 ),
                 SizedBox(height: 12),
-                Text('Alex Johnson',
+                Text(user!.fullName,
                     style: Theme.of(context)
                         .textTheme
                         .titleLarge
                         ?.copyWith(fontWeight: FontWeight.w800)),
-                Text(isAdmin == "admin" ? 'Administrator · St. Mary’s Parish' : 'Member · St. Mary’s Parish',
+                Text(isAdmin == "admin" ? 'Administrator · ${user.parish}' : 'Member · ${user.parish}',
                     style: Theme.of(context)
                         .textTheme
                         .bodyMedium
@@ -54,7 +54,7 @@ class ProfileScreen extends ConsumerWidget {
                   Text('Contact Information',
                       style: Theme.of(context).textTheme.titleMedium),
                   SizedBox(height: 8),
-                  KeyValueRow(icon: Icons.email, label: 'Email', value: user!.email),
+                  KeyValueRow(icon: Icons.email, label: 'Email', value: user.email),
                   KeyValueRow(icon: Icons.place, label: 'Parish', value: user.parish),
                 ],
               ),
