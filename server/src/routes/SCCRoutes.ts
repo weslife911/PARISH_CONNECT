@@ -4,8 +4,8 @@ import { addSCCRecord, getSCCRecord, getSCCRecords } from "../controllers/SCCCon
 
 const router = Router();
 
-router.get("/records", AuthMiddleware, getSCCRecords);
-router.get("/record/:id", AuthMiddleware, getSCCRecord);
-router.post("/add-record", AuthMiddleware, addSCCRecord);
+router.get("/scc/records", AuthMiddleware, getSCCRecords);
+router.get("/scc/record/:id", AuthMiddleware, getSCCRecord);
+router.post("/scc/add-record", AuthMiddleware, addSCCRecord);
 
 export default router

@@ -11,8 +11,12 @@ class ApiConfig {
   final String updateProfileUrl = "/update-profile";
 
   // SCC
-  final String getSCCRecordsUrl = "/records";
-  final String getSCCRecordDetailsUrl = "/record";
-  final String addSCCRecordsUrl = "/add-record";
+  final String getSCCRecordsUrl = "/scc/records";
+  final String getSCCRecordDetailsUrl = "/scc/record";
+  final String addSCCRecordsUrl = "/scc/add-record";
+
+  // PARISH
+  final String addParishRecordsUrl = "/parish/add-record";
+  final String getParishRecordsUrl = "/parish/records";
 
 }
