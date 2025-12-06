@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:futru_scc_app/models/scc/scc_record_model.dart';
 import 'package:futru_scc_app/repositories/auth/check_auth_repository.dart';
 import 'package:toastification/toastification.dart';
-import '../../widgets/helpers.dart'; // For showToast
+import '../../../widgets/helpers.dart'; // For showToast
 import "package:futru_scc_app/widgets/builds/build_stat_card.dart";
 import "package:futru_scc_app/widgets/builds/build_expansion_section.dart";
 
@@ -19,8 +19,8 @@ import 'package:open_filex/open_filex.dart';
 // DETAIL VIEW
 // =============================================================================
 
-class DetailView extends ConsumerWidget {
-  const DetailView({super.key, required this.report}); 
+class SCCDetailView extends ConsumerWidget {
+  const SCCDetailView({super.key, required this.report}); 
   
   final SccReportModel report;
 

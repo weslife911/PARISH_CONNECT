@@ -1,20 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
-import 'package:futru_scc_app/components/section/detail_view.dart';
-// Assuming ParishRecordsResponseModel is imported implicitly via its provider file.
+import 'package:futru_scc_app/components/section/parish/parish_detail_view.dart';
+import 'package:futru_scc_app/components/section/scc/scc_detail_view.dart';
 import 'package:futru_scc_app/repositories/parish/parish_report_repository.dart';
 import 'package:futru_scc_app/repositories/scc/scc_report_repository.dart';
 import 'package:futru_scc_app/widgets/helpers.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-
-// --------------------------------------------------------------------------------
-// CRITICAL ASSUMPTION: All report models (SCC, Parish, Deanery) are structured
-// such that the actual list of records is accessed via a property called 'records'
-// (if it's RecordsResponseModel) or 'parishes' (if it's ParishRecordsResponseModel).
-// And the items in the list (SccReportModel, ParishReportModel, etc.) all
-// have properties 'sccName', 'periodStart', and 'periodEnd'.
-// --------------------------------------------------------------------------------
+// IMPORT LOGGER UTILITY
+import 'package:futru_scc_app/utils/logger_util.dart';
 
 class ListTab extends ConsumerWidget {
   final List<String> items;
@@ -23,8 +17,9 @@ class ListTab extends ConsumerWidget {
   const ListTab({super.key, required this.items, required this.sectionTitle});
 
   // Helper method to build the actual list from the records.
-  // It now takes List<dynamic> and relies on dynamic access for properties.
+  // MODIFIED: Accepts List<dynamic> for flexibility.
   Widget _buildRecordList(BuildContext context, ColorScheme cs, List<dynamic> records) {
+    logger.d('ListTab: _buildRecordList called for section: $sectionTitle with ${records.length} records.');
     if (records.isEmpty) {
       return Center(child: Text('No $sectionTitle reports found.'));
     }
@@ -35,61 +30,117 @@ class ListTab extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       itemCount: records.length,
       itemBuilder: (context, i) {
-        // Use dynamic type for the report item.
-        final record = records[i];
+        
+        if(sectionTitle == "SCC") {
+          final record = records[i];
 
-        // Access properties dynamically. This assumes all ReportModels
-        // have these properties (sccName, periodStart, periodEnd).
-        String title = record.sccName;
-        String subtitle = 'Period: ${record.periodStart.toLocal().toString().split(' ')[0]} - ${record.periodEnd.toLocal().toString().split(' ')[0]}';
+          // Access properties dynamically (assuming all Report Models have them)
+          String title = record.sccName;
+          String subtitle = 'Period: ${record.periodStart.toLocal().toString().split(' ')[0]} - ${record.periodEnd.toLocal().toString().split(' ')[0]}';
 
-        return Card(
-          elevation: 4.0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-            leading: CircleAvatar(
-              backgroundColor: cs.primary.withOpacity(0.15),
-              child: Icon(Icons.description, color: cs.primary),
+          return Card(
+            elevation: 4.0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            margin: const EdgeInsets.only(bottom: 12),
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+              leading: CircleAvatar(
+                backgroundColor: cs.primary.withOpacity(0.15),
+                child: Icon(Icons.description, color: cs.primary),
+              ),
+              title: Text(
+                title,
+                style: theme.textTheme.titleMedium!.copyWith(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(
+                subtitle,
+                style: theme.textTheme.bodySmall!.copyWith(color: cs.onSurfaceVariant),
+              ),
+              trailing: Icon(Icons.arrow_forward_ios_rounded, color: cs.primary),
+              onTap: () => Navigator.of(context).push(AnimatedRoute(
+                // Pass the generic 'record' to DetailView.
+                SCCDetailView(report: record),
+              )),
             ),
-            title: Text(
-              title,
-              style: theme.textTheme.titleMedium!.copyWith(fontWeight: FontWeight.bold),
+          );
+        } else if(sectionTitle == "Parish") {
+          final record = records[i]; 
+
+          // --- Access Parish data fields ---
+          String title = record.commissionName; // Uses commissionName for the title.
+          
+          // MODIFIED: Uses the single 'periodCovered' field to generate the subtitle.
+          // It maintains the original date formatting style by splitting the string.
+          String subtitle = 'Period Covered: ${record.periodCovered.toLocal().toString().split(' ')[0]}'; 
+
+          // Get Theme/ColorScheme for styling (Assuming cs and theme are defined)
+          final cs = Theme.of(context).colorScheme;
+          final theme = Theme.of(context);
+
+
+          return Card(
+            elevation: 4.0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            margin: const EdgeInsets.only(bottom: 12),
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+              leading: CircleAvatar(
+                backgroundColor: cs.primary.withOpacity(0.15),
+                child: Icon(Icons.description, color: cs.primary),
+              ),
+              title: Text(
+                title, 
+                style: theme.textTheme.titleMedium!.copyWith(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(
+                subtitle, 
+                style: theme.textTheme.bodySmall!.copyWith(color: cs.onSurfaceVariant),
+              ),
+              trailing: Icon(Icons.arrow_forward_ios_rounded, color: cs.primary),
+              onTap: () => Navigator.of(context).push(AnimatedRoute(
+                // Pass the generic 'record' (ParishReportModel) to DetailView.
+                ParishDetailView(report: record),
+              )),
             ),
-            subtitle: Text(
-              subtitle,
-              style: theme.textTheme.bodySmall!.copyWith(color: cs.onSurfaceVariant),
-            ),
-            trailing: Icon(Icons.arrow_forward_ios_rounded, color: cs.primary),
-            onTap: () => Navigator.of(context).push(AnimatedRoute(
-              // Pass the generic 'record' to DetailView.
-              DetailView(report: record),
-            )),
+          );
+        }
+         else {
+          return Center(
+          child: LoadingAnimationWidget.inkDrop(
+            color: cs.secondary,
+            size: 50.0,
           ),
         );
+        }
       },
     );
   }
 
   // Helper method to handle the AsyncValue state.
-  // We use dynamic for the AsyncValue's generic type since the type will be
-  // different (RecordsResponseModel or ParishRecordsResponseModel).
+  // MODIFIED: Accepts AsyncValue<dynamic> as the inner type can be RecordsResponseModel or ParishRecordsResponseModel.
   Widget _handleAsyncValue(BuildContext context, ColorScheme cs, AsyncValue<dynamic> asyncRecords) {
+    logger.d('ListTab: _handleAsyncValue started for section: $sectionTitle.');
     return asyncRecords.when(
-      loading: () => Center(
-        child: LoadingAnimationWidget.inkDrop(
-          color: cs.secondary,
-          size: 50.0,
-        ),
-      ),
-      error: (err, stack) => Center(child: Text('Error loading $sectionTitle reports: ${err.toString()}')),
+      loading: () {
+        logger.d('ListTab: Status - Loading $sectionTitle reports.');
+        return Center(
+          child: LoadingAnimationWidget.inkDrop(
+            color: cs.secondary,
+            size: 50.0,
+          ),
+        );
+      },
+      error: (err, stack) {
+        logger.e('ListTab: Status - Error loading $sectionTitle reports.', error: err, stackTrace: stack);
+        return Center(child: Text('Error loading $sectionTitle reports: ${err.toString()}'));
+      },
       
-      // The data received here will be either RecordsResponseModel or ParishRecordsResponseModel.
       data: (responseModel) {
-        // Use dynamic to access the properties, which should be common (success, message)
-        // and the records list, which will be named differently.
+        logger.d('ListTab: Status - Data received for $sectionTitle.');
+        
+        // Check for API success status using dynamic property access
         if (!responseModel.success) {
+          logger.w('ListTab: API response indicates failure for $sectionTitle: ${responseModel.message}');
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -100,15 +151,19 @@ class ListTab extends ConsumerWidget {
 
         List<dynamic> recordsList = [];
         
-        // Use a conditional check to extract the list based on the expected model structure
-        // This is the key change to handle the different report model structures.
+        // Use a conditional check to extract the correct list property
         if (sectionTitle.toLowerCase() == 'scc' || sectionTitle.toLowerCase() == 'deanery') {
-            // Assuming 'records' holds the list for SCC and Deanery
+            // Assumes SCC and Deanery response models use the 'records' property
             recordsList = responseModel.records;
+            logger.i('ListTab: Extracted records using \'records\' field for $sectionTitle. Count: ${recordsList.length}');
         } else if (sectionTitle.toLowerCase() == 'parish') {
-            // Assuming 'parishes' holds the list for Parish
+            // Assumes Parish response model uses the 'parishes' property
             recordsList = responseModel.parishes;
+            logger.i('ListTab: Extracted records using \'parishes\' field for $sectionTitle. Count: ${recordsList.length}');
+        } else {
+             logger.w('ListTab: No specific record field extraction logic for section: $sectionTitle. Returning empty list.');
         }
+
 
         // Pass the dynamically extracted list of records to the helper method
         return _buildRecordList(context, cs, recordsList);
@@ -118,36 +173,40 @@ class ListTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    logger.d('ListTab: Widget build started for section: $sectionTitle.');
     final cs = Theme.of(context).colorScheme;
 
-    // Use ProviderBase<AsyncValue<dynamic>> to hold the FutureProviders which
-    // return different concrete types (RecordsResponseModel or ParishRecordsResponseModel).
+    // Use a generic type for the provider to allow it to hold FutureProviders
+    // that return different concrete response models.
     ProviderBase<AsyncValue<dynamic>>? provider;
 
     // Select the appropriate FutureProvider based on the sectionTitle
     switch (sectionTitle.toLowerCase()) {
       case 'scc':
-        // getSCCRecordsFutureProvider returns Future<RecordsResponseModel>
         provider = getSCCRecordsFutureProvider;
+        logger.i('ListTab: Selected getSCCRecordsFutureProvider for section: $sectionTitle.');
         break;
       case 'parish':
-        // getParishRecordsFutureProvider returns Future<ParishRecordsResponseModel>
         provider = getParishRecordsFutureProvider;
+        logger.i('ListTab: Selected getParishRecordsFutureProvider for section: $sectionTitle.');
         break;
       case 'deanery':
-        // Assuming Deanery returns RecordsResponseModel structure for now
         // provider = getDeaneryRecordsFutureProvider;
+        // logger.i('ListTab: Selected getDeaneryRecordsFutureProvider for section: $sectionTitle.');
         break;
       default:
         provider = null;
+        logger.w('ListTab: No provider found for section: $sectionTitle.');
     }
 
     if (provider != null) {
-      // Watch the provider. We need to cast it to the common ProviderListenable type.
+      logger.d('ListTab: Watching selected provider and calling _handleAsyncValue.');
+      // Watch the provider, casting it to the common ProviderListenable type.
       final asyncRecords = ref.watch(provider as ProviderListenable<AsyncValue<dynamic>>);
       return _handleAsyncValue(context, cs, asyncRecords);
     }
 
+    logger.w('ListTab: Rendering "No data provider" message for section: $sectionTitle.');
     return Center(
       child: Text(
         'No data provider configured for "$sectionTitle" section.',

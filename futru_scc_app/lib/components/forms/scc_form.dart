@@ -2,11 +2,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:futru_scc_app/components/steps/step_activities_part1.dart';
-import 'package:futru_scc_app/components/steps/step_activities_part2.dart';
-import 'package:futru_scc_app/components/steps/step_core_info.dart';
-import 'package:futru_scc_app/components/steps/step_general_report.dart';
-import 'package:futru_scc_app/components/steps/step_membership.dart';
+import 'package:futru_scc_app/components/steps/scc/step_activities_part1.dart';
+import 'package:futru_scc_app/components/steps/scc/step_activities_part2.dart';
+import 'package:futru_scc_app/components/steps/scc/step_core_info.dart';
+import 'package:futru_scc_app/components/steps/scc/step_general_report.dart';
+import 'package:futru_scc_app/components/steps/scc/step_membership.dart';
 import 'package:futru_scc_app/models/scc/create_scc_record_response.dart';
 import 'package:futru_scc_app/models/scc/scc_record_model.dart';
 import 'package:futru_scc_app/repositories/scc/scc_report_repository.dart'; 
