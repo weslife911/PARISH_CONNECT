@@ -1,7 +1,7 @@
 // lib/components/scc_form/steps/step_general_report.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:parish_connect/widgets/builds/_build_list_input.dart';
+import 'package:parish_connect/widgets/builds/build_list_input.dart';
 
 class StepGeneralReport extends ConsumerWidget {
   final List<String> problemsList;

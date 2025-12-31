@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:parish_connect/components/forms/parish_form.dart';
-import 'package:parish_connect/widgets/builds/_build_list_input.dart'; // Assuming DynamicListInputField exists
+import 'package:parish_connect/widgets/builds/build_list_input.dart'; // Assuming DynamicListInputField exists
 
 class StepParishActivities extends ConsumerWidget {
   final ParishFormState parent;

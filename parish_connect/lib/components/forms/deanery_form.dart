@@ -1,7 +1,7 @@
 // scc_form.dart
 
 import 'package:flutter/material.dart';
-import 'package:_app/widgets/helpers.dart';
+import 'package:parish_connect/widgets/helpers.dart';
 import 'package:toastification/toastification.dart';
 
 class DeaneryForm extends StatefulWidget {

@@ -1,4 +1,3 @@
-// lib/components/scc_form/widgets/_build_list_input.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:parish_connect/utils/logger_util.dart'; // Ensure this import is correct
