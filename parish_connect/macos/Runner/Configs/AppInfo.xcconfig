@@ -8,7 +8,7 @@
 PRODUCT_NAME = parish_connect
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.parishConnectApp
+PRODUCT_BUNDLE_IDENTIFIER = com.example.parishConnect
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2025 com.example. All rights reserved.
