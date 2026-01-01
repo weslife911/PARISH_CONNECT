@@ -6,6 +6,7 @@ import connectToDb from "./db/connectToDb";
 import AuthRoutes from "./routes/AuthRoutes"
 import SCCRoutes from "./routes/SCCRoutes"
 import ParishRoutes from "./routes/ParishRoutes";
+import MissionRoutes from "./routes/MissionRoutes"
 import cors from "cors"
 // --- REMOVED IMPORT: express-fileupload is no longer used ---
 // import fileUpload from 'express-fileupload';
@@ -15,14 +16,14 @@ config();
 const app: Application = express();
 
 // The JSON limit is essential to handle large Base64 image strings.
-app.use(express.json({ limit: '50mb' })); 
+app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // --- REMOVED MIDDLEWARE: express-fileupload is no longer used ---
 /*
-app.use(fileUpload({ 
-    useTempFiles: true, 
-    tempFileDir: '/tmp/' 
+app.use(fileUpload({
+    useTempFiles: true,
+    tempFileDir: '/tmp/'
 }));
 */
 
@@ -36,6 +37,7 @@ app.use(cors({
 app.use("/api/v1", AuthRoutes);
 app.use("/api/v1", ParishRoutes);
 app.use("/api/v1", SCCRoutes);
+app.use("/api/v1", MissionRoutes);
 
 app.get("/health", (req: Request, res: Response) => {
     return res.status(200).json({
