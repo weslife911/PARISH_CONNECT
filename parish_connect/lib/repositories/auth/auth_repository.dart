@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:parish_connect/config/api_config.dart';
 import 'package:parish_connect/models/auth/auth_response_model.dart';
+import 'package:parish_connect/models/auth/update_user_model.dart';
 import 'package:parish_connect/repositories/storage/local_storage_repository.dart';
 import 'package:parish_connect/utils/logger_util.dart'; // ADDED: Logger utility
 import 'package:http/http.dart';
@@ -127,6 +128,34 @@ class AuthRepository {
         message: e.toString(),
         token: ""
       );
+    }
+  }
+
+  Future<AuthResponseModel> updateProfile(
+    String userId,
+    UpdateUserModel updateData,
+  ) async {
+    final ApiConfig config = ApiConfig();
+    final String path = "${config.apiBasePath}/update-profile/$userId";
+    final Uri url = Uri.https(config.apiBaseUrl, path);
+
+    final String body = updateUserModelToJson(updateData);
+    final String? token = await _localStorageRepository.getJWTAuthToken();
+
+    try {
+      final response = await _client.put(
+        url,
+        body: body,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+      );
+
+      final jsonResponse = authResponseModelFromJson(response.body);
+      return jsonResponse;
+    } catch (e) {
+      return AuthResponseModel(success: false, message: e.toString());
     }
   }
 }

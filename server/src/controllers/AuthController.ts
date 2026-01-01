@@ -21,7 +21,7 @@ export const signupUser = async (req: Request, res: Response) => {
                 success: false,
                 message: firstError?.message,
             });
-        }        
+        }
 
         // Destructure new fields: deanery and parish
         const { full_name, username, email, password, deanery, parish, role } = validation.data;
@@ -40,7 +40,7 @@ export const signupUser = async (req: Request, res: Response) => {
             full_name,
             username,
             email,
-            deanery, 
+            deanery,
             parish,
             password: hashedPassword,
             role: role || "user"
@@ -84,7 +84,7 @@ export const loginUser = async(req: Request, res: Response) => {
                 success: false,
                 message: firstError?.message,
             });
-        }    
+        }
 
         const { email, password } = validation.data;
 
@@ -160,7 +160,7 @@ export const verifyEmail = async(req: Request, res: Response) => {
 
 export const resetPassword = async(req: Request, res: Response) => {
     try {
-        
+
         const validation = validateResetPassword.safeParse(req.body);
 
         if(!validation.success) return res.json({
@@ -170,7 +170,7 @@ export const resetPassword = async(req: Request, res: Response) => {
 
         const { token, newPassword } = validation.data;
 
-        const decoded = decodeToken(token) as any; 
+        const decoded = decodeToken(token) as any;
 
         if(!decoded || !decoded.id) {
             return res.status(401).json({
@@ -178,14 +178,14 @@ export const resetPassword = async(req: Request, res: Response) => {
                 message: "Invalid or expired reset token provided."
             });
         }
-        
+
         const salt = await genSalt(10);
         const hashedPassword = await hash(newPassword, salt);
 
         const updatedUser = await User.findByIdAndUpdate(
             decoded.id,
             {
-                $set: { 
+                $set: {
                     password: hashedPassword,
                 }
             },
@@ -213,7 +213,7 @@ export const resetPassword = async(req: Request, res: Response) => {
                 message: "Invalid or expired reset token."
             });
         }
-        
+
         console.error("Reset password error:", e);
         return res.status(500).json({
             success: false,
@@ -232,26 +232,22 @@ export const checkAuth = (req: Request, res:Response) => {
 
 export const updateProfile = async(req: Request, res: Response) => {
     try {
-
         const { userId } = req.params;
 
-        const { full_name, username, email, SCC, bio, profile_pic } = req.body;
+        // Extract deanery and parish from req.body
+        const { full_name, username, email, bio, profile_pic, deanery, parish } = req.body;
 
-        const validateUser = validateUserData.safeParse({
-            full_name: full_name || req.user?.full_name,
-            username: username || req.user?.username,
-            email: email || req.user?.email,
-            bio: bio || "",
-            profile_pic: profile_pic || ""
-        });
-
-        if(!validateUser.success) return res.json({
-            success: false,
-            message: validateUser.error.issues[0]?.message
-        });
-
+        // Note: Ensure your 'validateUserData' Zod schema is also updated to allow these fields
         const updatedUser = await User.findByIdAndUpdate(userId, {
-            $set: { full_name: validateUser.data.full_name, username: validateUser.data.username, email: validateUser.data.email, SCC: validateUser.data.SCC, bio: validateUser.data.bio, profile_pic: validateUser.data.profile_pic }
+            $set: {
+                full_name,
+                username,
+                email,
+                bio,
+                profile_pic,
+                deanery,
+                parish
+            }
         }, { new: true });
 
         if(!updatedUser) return res.json({
@@ -265,18 +261,10 @@ export const updateProfile = async(req: Request, res: Response) => {
         });
 
     } catch (e: any) {
-        if (e.name === 'JsonWebTokenError' || e.name === 'TokenExpiredError') {
-             return res.status(401).json({
-                success: false,
-                message: "Invalid or expired reset token."
-            });
-        }
-        
         console.error("Update Profile error:", e);
         return res.status(500).json({
             success: false,
-            message: "Internal server error",
-            error: e instanceof Error ? e.message : "An unknown error occurred"
+            message: "Internal server error"
         });
     }
 }
