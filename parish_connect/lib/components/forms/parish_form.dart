@@ -1,17 +1,16 @@
-// parish_form.dart
+// lib/components/forms/parish_form.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// NOTE: Ensure these imports are correct for your project structure
+import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:parish_connect/components/steps/parish/step_parish_core_info.dart';
 import 'package:parish_connect/components/steps/parish/step_parish_activities.dart';
 import 'package:parish_connect/components/steps/parish/step_parish_general_report.dart';
-
-import 'package:parish_connect/models/parish/create_parish_record_response.dart';
+import 'package:parish_connect/config/api_keys.dart';
 import 'package:parish_connect/models/parish/parish_record_model.dart';
 import 'package:parish_connect/repositories/parish/parish_report_repository.dart';
-import 'package:parish_connect/utils/logger_util.dart'; // Assuming logger is available
-import 'package:parish_connect/widgets/helpers.dart'; // For showToast
+import 'package:parish_connect/utils/logger_util.dart';
+import 'package:parish_connect/widgets/helpers.dart';
 import 'package:toastification/toastification.dart';
 
 class ParishForm extends ConsumerStatefulWidget {
@@ -22,48 +21,41 @@ class ParishForm extends ConsumerStatefulWidget {
 }
 
 class ParishFormState extends ConsumerState<ParishForm> {
-  // --- Form Navigation State ---
   int currentPage = 0;
   final PageController pageController = PageController();
-
   final List<GlobalKey<FormState>> formKeys = [
     GlobalKey<FormState>(),
     GlobalKey<FormState>(),
     GlobalKey<FormState>(),
   ];
 
-  GlobalKey<FormState> get form => formKeys[currentPage];
-
-
-  // --- Data Controllers/Holders (ParishReportModel fields) ---
-  final TextEditingController commissionNameController = TextEditingController();
+  // --- Public Data Controllers (Fixed naming for child access) ---
+  final TextEditingController commissionNameController =
+      TextEditingController();
   DateTime? periodStart;
   DateTime? periodEnd;
 
-  // Table Data (Controllers for Number Fields)
   final TextEditingController totalMembersController = TextEditingController();
-  final TextEditingController missionsRepresentedController = TextEditingController();
-  final TextEditingController generalMeetingsController = TextEditingController();
+  final TextEditingController missionsRepresentedController =
+      TextEditingController();
+  final TextEditingController generalMeetingsController =
+      TextEditingController();
   final TextEditingController activeMembersController = TextEditingController();
   final TextEditingController excoMeetingsController = TextEditingController();
 
-  // Report Sections (List Storage)
   List<String> activities = [];
   List<String> problemsAndSolutions = [];
   List<String> issuesForCouncil = [];
   List<String> futurePlans = [];
 
-  // --- Widget Pages ---
-  late final List<Widget> _pages;
+  // --- AI Configuration ---
+  late final GenerativeModel _model;
+  bool isProcessing = false;
 
   @override
   void initState() {
     super.initState();
-    _pages = [
-      StepParishCoreInfo(parent: this),
-      StepParishActivities(parent: this),
-      StepParishGeneralReport(parent: this),
-    ];
+    _model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: geminiApiKey);
   }
 
   @override
@@ -78,181 +70,196 @@ class ParishFormState extends ConsumerState<ParishForm> {
     super.dispose();
   }
 
-  // Date Range Picker function
   Future<void> pickDateRange(BuildContext context) async {
-    final now = DateTime.now();
-    final initialDateRange = periodStart != null && periodEnd != null
-        ? DateTimeRange(start: periodStart!, end: periodEnd!)
-        : DateTimeRange(start: now, end: now);
-
-    final res = await showDateRangePicker(
+    final DateTimeRange? picked = await showDateRangePicker(
       context: context,
-      firstDate: DateTime(now.year - 5),
-      lastDate: DateTime(now.year + 5),
-      initialDateRange: initialDateRange,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2101),
+      initialDateRange: (periodStart != null && periodEnd != null)
+          ? DateTimeRange(start: periodStart!, end: periodEnd!)
+          : null,
     );
 
-    if (res != null) {
+    if (picked != null) {
       setState(() {
-        periodStart = res.start;
-        periodEnd = res.end;
-      });
-      logger.d('ParishForm: Dates selected: Start: $periodStart, End: $periodEnd');
-    }
-  }
-
-
-  // --- Navigation Logic ---
-
-  void _nextStep() {
-    if (!formKeys[currentPage].currentState!.validate()) {
-      showToast(context, 'Please fill all required fields in this section.', type: ToastificationType.error);
-      return;
-    }
-
-    // Validation for date range on the first step
-    if (currentPage == 0 && (periodStart == null || periodEnd == null)) {
-      showToast(context, 'Please select the Period Covered start and end dates.', type: ToastificationType.error);
-      return;
-    }
-
-    if (currentPage < formKeys.length - 1) {
-      pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeIn,
-      );
-      setState(() {
-        currentPage++;
+        periodStart = picked.start;
+        periodEnd = picked.end;
       });
     }
   }
 
-  void _previousStep() {
-    if (currentPage > 0) {
-      pageController.previousPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeIn,
-      );
-      setState(() {
-        currentPage--;
-      });
-    }
-  }
-
-  // --- Submission Logic ---
-
-  Future<void> _submitReport() async {
-    if (!formKeys[currentPage].currentState!.validate()) {
-      showToast(context, 'Please complete the final report section.', type: ToastificationType.error);
-      return;
-    }
-
-    if(periodStart == null || periodEnd == null) {
-      showToast(context, 'Please select the Period Covered start and end dates.', type: ToastificationType.error);
-      return;
-    }
-
-    showToast(context, 'Submitting report...', type: ToastificationType.info);
-
-    final ParishReportModel report = ParishReportModel(
-      commissionName: commissionNameController.text.trim(),
-      periodCovered: periodStart!,
-      totalMembers: int.tryParse(totalMembersController.text) ?? 0,
-      missionsRepresented: int.tryParse(missionsRepresentedController.text) ?? 0,
-      generalMeetings: int.tryParse(generalMeetingsController.text) ?? 0,
-      activeMembers: int.tryParse(activeMembersController.text) ?? 0,
-      excoMeetings: int.tryParse(excoMeetingsController.text) ?? 0,
-      activities: activities,
-      problemsAndSolutions: problemsAndSolutions,
-      issuesForCouncil: issuesForCouncil,
-      futurePlans: futurePlans,
-    );
-
-    final repo = ref.read(parishReportRepositoryProvider);
-    late CreateParishRecordResponseModel response;
+  // AI Logic to enhance the report
+  Future<String> _enhanceText(String input) async {
+    // If input is empty or AI model failed to initialize, return original text
+    if (input.trim().isEmpty) return input;
 
     try {
-      response = await repo.createParishReport(report);
+      final prompt =
+          "As a professional church secretary, rewrite this parish report entry to be more professional, "
+          "grammatically correct, and concise: $input";
 
-      // ADDED: Mounted check before using context after async operation
-      if (!mounted) return;
+      final content = [Content.text(prompt)];
+      final response = await _model.generateContent(content);
 
-      if (response.success) {
-        showToast(context, 'Parish Report submitted successfully!', type: ToastificationType.success);
-      } else {
-        showToast(context, response.message, type: ToastificationType.error);
-      }
+      // Return enhanced text if available, otherwise return original
+      return response.text ?? input;
     } catch (e) {
-      // ADDED: Mounted check before using context
-      if (!mounted) return;
-      logger.e('Parish Submission Error: $e');
-      showToast(context, 'Network or unexpected error occurred.', type: ToastificationType.error);
+      debugPrint("AI Enhancement failed: $e");
+      return input;
     }
   }
 
+  void _nextStep() {
+    logger.i("Attempting to move to next step. Current page: $currentPage");
+
+    final bool isFormValid =
+        formKeys[currentPage].currentState?.validate() ?? false;
+
+    if (isFormValid) {
+      if (currentPage < 2) {
+        pageController.nextPage(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeIn,
+        );
+        setState(() {
+          currentPage++;
+        });
+        logger.d("Moved to page $currentPage");
+      }
+    } else {
+      logger.w("Form validation failed for page $currentPage");
+    }
+  }
+
+  Future<void> _submitReport() async {
+    logger.i("Starting submission process...");
+
+    // Log the state of dates
+    logger.d("periodStart: $periodStart, periodEnd: $periodEnd");
+
+    if (periodStart == null || periodEnd == null) {
+      logger.w("Submission blocked: Dates are null.");
+      showToast(
+        context,
+        'Please select a report period.',
+        type: ToastificationType.warning,
+      );
+      return;
+    }
+
+    if (formKeys[currentPage].currentState?.validate() ?? false) {
+      setState(() => isProcessing = true);
+
+      try {
+        logger.i("Enhancing text with AI...");
+        final List<String> enhancedActivities = await Future.wait(
+          activities.map((item) => _enhanceText(item)),
+        );
+
+        // DEBUG: Log all controller values before Model creation
+        logger.d("Commission: ${commissionNameController.text}");
+        logger.d(
+          "Stats: Total(${totalMembersController.text}), Active(${activeMembersController.text})",
+        );
+
+        final report = ParishReportModel(
+          commissionName: commissionNameController.text.trim(),
+          periodCovered:
+              periodStart!, // If it crashes here, the log above will show periodStart was null
+          totalMembers: int.tryParse(totalMembersController.text) ?? 0,
+          activeMembers: int.tryParse(activeMembersController.text) ?? 0,
+          missionsRepresented:
+              int.tryParse(missionsRepresentedController.text) ?? 0,
+          generalMeetings: int.tryParse(generalMeetingsController.text) ?? 0,
+          excoMeetings: int.tryParse(excoMeetingsController.text) ?? 0,
+          activities: enhancedActivities,
+          problemsAndSolutions: List.from(problemsAndSolutions),
+          issuesForCouncil: List.from(issuesForCouncil),
+          futurePlans: List.from(futurePlans),
+        );
+
+        logger.i("Sending report to repository...");
+        final repository = ref.read(parishReportRepositoryProvider);
+        final response = await repository.createParishReport(report);
+
+        if (response.success) {
+          logger.i("Submission successful!");
+          if(mounted) {
+            showToast(
+              context,
+              'Submitted Successfully',
+              type: ToastificationType.success,
+            );
+          }
+          if (mounted) Navigator.pop(context);
+        } else {
+          logger.e("Server rejected submission: ${response.message}");
+        }
+      } catch (e, stackTrace) {
+        // This will catch the Null Check error and print the EXACT line number
+        logger.e("CRITICAL SUBMISSION ERROR", error: e, stackTrace: stackTrace);
+        if(mounted) {
+          showToast(context, 'Error: $e', type: ToastificationType.error);
+        }
+      } finally {
+        if (mounted) setState(() => isProcessing = false);
+      }
+    } else {
+      logger.w("Form validation failed.");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // ... (rest of build method is unchanged)
-    return Column(
-      children: [
-        Expanded(
-          child: PageView.builder(
-            controller: pageController,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _pages.length,
-            onPageChanged: (index) {
-              setState(() {
-                currentPage = index;
-              });
-            },
-            itemBuilder: (context, index) {
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Form(
-                  key: formKeys[index],
-                  child: _pages[index],
+    return Scaffold(
+      body: Column(
+        children: [
+          if (isProcessing) const LinearProgressIndicator(),
+          Expanded(
+            child: PageView(
+              controller: pageController,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                Form(
+                  key: formKeys[0],
+                  child: StepParishCoreInfo(parent: this),
                 ),
-              );
-            },
+                Form(
+                  key: formKeys[1],
+                  child: StepParishActivities(parent: this),
+                ),
+                Form(
+                  key: formKeys[2],
+                  child: StepParishGeneralReport(parent: this),
+                )
+              ],
+            ),
           ),
-        ),
-        // ... (Navigation buttons)
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16.0, 4.0, 16.0, 32.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Visibility(
-                  visible: currentPage > 0,
-                  child: OutlinedButton.icon(
-                    onPressed: _previousStep,
-                    icon: const Icon(Icons.arrow_back),
-                    label: const Text('Previous'),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                if (currentPage > 0)
+                  TextButton(
+                    onPressed: () {
+                      pageController.previousPage(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeIn,
+                      );
+                      setState(() => currentPage--);
+                    },
+                    child: const Text("Back"),
                   ),
+                ElevatedButton(
+                  onPressed: currentPage < 2 ? _nextStep : _submitReport,
+                  child: Text(currentPage < 2 ? "Next" : "AI Submit"),
                 ),
-              ),
-              if (currentPage > 0 && currentPage < formKeys.length - 1)
-                const SizedBox(width: 16),
-
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: currentPage < formKeys.length - 1
-                      ? _nextStep
-                      : _submitReport,
-                  icon: Icon(currentPage < formKeys.length - 1
-                      ? Icons.arrow_forward
-                      : Icons.send),
-                  label: Text(currentPage < formKeys.length - 1
-                      ? 'Next'
-                      : 'Submit'),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

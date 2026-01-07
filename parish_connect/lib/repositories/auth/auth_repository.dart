@@ -7,10 +7,12 @@ import 'package:parish_connect/repositories/storage/local_storage_repository.dar
 import 'package:parish_connect/utils/logger_util.dart'; // ADDED: Logger utility
 import 'package:http/http.dart';
 
-final authRepositoryProvider = Provider((ref) => AuthRepository(
-  client: Client(),
-  localStorageRepository: LocalStorageRepository()
-));
+final authRepositoryProvider = Provider(
+  (ref) => AuthRepository(
+    client: Client(),
+    localStorageRepository: LocalStorageRepository(),
+  ),
+);
 
 class AuthRepository {
   final Client _client;
@@ -19,7 +21,8 @@ class AuthRepository {
   AuthRepository({
     required Client client,
     required LocalStorageRepository localStorageRepository,
-  }): _client = client, _localStorageRepository = localStorageRepository;
+  }) : _client = client,
+       _localStorageRepository = localStorageRepository;
 
   Future<AuthResponseModel> loginUser(String email, String password) async {
     final ApiConfig config = ApiConfig();
@@ -27,54 +30,63 @@ class AuthRepository {
     final Uri url = Uri.https(config.apiBaseUrl, path);
 
     // --- Debugging: Log URL and request body ---
-    final body = jsonEncode({
-      "email": email,
-      "password": password
-    });
-    logger.d('Login Request (URL: $url, Body: $body)'); // FIXED and consolidated
+    final body = jsonEncode({"email": email, "password": password});
+    logger.d(
+      'Login Request (URL: $url, Body: $body)',
+    ); // FIXED and consolidated
     // ------------------------------------------
 
     final response = await _client.post(
       url,
       body: body,
-      headers: {
-        "Content-Type": "application/json",
-      }
+      headers: {"Content-Type": "application/json"},
     );
 
     try {
       // --- Debugging: Log response info ---
-      logger.d('Login Response (Status: ${response.statusCode}, Body: ${response.body})'); // FIXED and consolidated
+      logger.d(
+        'Login Response (Status: ${response.statusCode}, Body: ${response.body})',
+      ); // FIXED and consolidated
       // ------------------------------------
 
       final jsonResponse = authResponseModelFromJson(response.body);
-      if(response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         await _localStorageRepository.setJWTAuthToken(jsonResponse.token!);
         return AuthResponseModel(
           success: jsonResponse.success,
           message: jsonResponse.message,
-          token: jsonResponse.token
+          token: jsonResponse.token,
         );
       } else {
         return AuthResponseModel(
           success: jsonResponse.success,
           message: jsonResponse.message,
-          token: ""
+          token: "",
         );
       }
-    } catch(e) {
+    } catch (e) {
       // --- Debugging: Log error on failure ---
-      logger.e('Login Error: Exception caught.', error: e); // FIXED (Using logger.e and error parameter)
+      logger.e(
+        'Login Error: Exception caught.',
+        error: e,
+      ); // FIXED (Using logger.e and error parameter)
       // ---------------------------------------
       return AuthResponseModel(
         success: false,
         message: e.toString(),
-        token: ""
+        token: "",
       );
     }
   }
 
-  Future<AuthResponseModel> signupUser(String fullName, String userName, String deanery, String parish, String email, String password) async {
+  Future<AuthResponseModel> signupUser(
+    String fullName,
+    String userName,
+    String deanery,
+    String parish,
+    String email,
+    String password,
+  ) async {
     final ApiConfig config = ApiConfig();
     final String path = config.apiBasePath + config.signupUrl;
     final Uri url = Uri.https(config.apiBaseUrl, path);
@@ -86,47 +98,52 @@ class AuthRepository {
       "email": email,
       "deanery": deanery,
       "parish": parish,
-      "password": password
+      "password": password,
     });
-    logger.d('Signup Request (URL: $url, Body: $body)'); // FIXED and consolidated
+    logger.d(
+      'Signup Request (URL: $url, Body: $body)',
+    ); // FIXED and consolidated
     // -------------------------------------------
 
     final response = await _client.post(
       url,
       body: body,
-      headers: {
-        "Content-Type": "application/json",
-      }
+      headers: {"Content-Type": "application/json"},
     );
 
     try {
       // --- Debugging: Log response info ---
-      logger.d('Signup Response (Status: ${response.statusCode}, Body: ${response.body})'); // FIXED and consolidated
+      logger.d(
+        'Signup Response (Status: ${response.statusCode}, Body: ${response.body})',
+      ); // FIXED and consolidated
       // ------------------------------------
 
       final jsonResponse = authResponseModelFromJson(response.body);
-      if(response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         await _localStorageRepository.setJWTAuthToken(jsonResponse.token!);
         return AuthResponseModel(
           success: jsonResponse.success,
           message: jsonResponse.message,
-          token: jsonResponse.token
+          token: jsonResponse.token,
         );
       } else {
         return AuthResponseModel(
           success: jsonResponse.success,
           message: jsonResponse.message,
-          token: ""
+          token: "",
         );
       }
-    } catch(e) {
+    } catch (e) {
       // --- Debugging: Log error on failure ---
-      logger.e('Signup Error: Exception caught.', error: e); // FIXED (Using logger.e and error parameter)
+      logger.e(
+        'Signup Error: Exception caught.',
+        error: e,
+      ); // FIXED (Using logger.e and error parameter)
       // ---------------------------------------
       return AuthResponseModel(
         success: false,
         message: e.toString(),
-        token: ""
+        token: "",
       );
     }
   }
@@ -136,6 +153,7 @@ class AuthRepository {
     UpdateUserModel updateData,
   ) async {
     final ApiConfig config = ApiConfig();
+    // Target: /auth/update-profile/:userId
     final String path = "${config.apiBasePath}/update-profile/$userId";
     final Uri url = Uri.https(config.apiBaseUrl, path);
 
@@ -152,9 +170,10 @@ class AuthRepository {
         },
       );
 
-      final jsonResponse = authResponseModelFromJson(response.body);
-      return jsonResponse;
+      logger.d('Update Response: ${response.body}');
+      return authResponseModelFromJson(response.body);
     } catch (e) {
+      logger.e('Update Error', error: e);
       return AuthResponseModel(success: false, message: e.toString());
     }
   }

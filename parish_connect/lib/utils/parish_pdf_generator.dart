@@ -11,20 +11,15 @@ import 'package:open_filex/open_filex.dart';
 import 'package:parish_connect/models/parish/parish_record_model.dart';
 import 'package:parish_connect/utils/logger_util.dart';
 import 'package:parish_connect/widgets/helpers.dart';
-import 'package:toastification/toastification.dart'; // Assuming showToast is here
-
+import 'package:toastification/toastification.dart';
 
 class ParishPdfGenerator {
-
   // ===========================================================================
-  // 1. PDF HELPER WIDGETS (Uses built-in Helvetica fonts)
+  // 1. PDF HELPER WIDGETS
   // ===========================================================================
 
-  static pw.TextStyle _textStyle(pw.Font font) => pw.TextStyle(
-    font: font,
-    fontSize: 10,
-    color: PdfColors.black,
-  );
+  static pw.TextStyle _textStyle(pw.Font font) =>
+      pw.TextStyle(font: font, fontSize: 10, color: PdfColors.black);
 
   static pw.TextStyle _headerStyle(pw.Font font) => pw.TextStyle(
     font: font,
@@ -63,7 +58,10 @@ class ParishPdfGenerator {
                 children: [
                   pw.SizedBox(
                     width: 10,
-                    child: pw.Text('•', style: _textStyle(font).copyWith(fontSize: 12)),
+                    child: pw.Text(
+                      '•',
+                      style: _textStyle(font).copyWith(fontSize: 12),
+                    ),
                   ),
                   pw.Expanded(
                     child: pw.Text(items[index], style: _textStyle(font)),
@@ -99,15 +97,17 @@ class ParishPdfGenerator {
 
       rows.add(
         pw.TableRow(
-          decoration: const pw.BoxDecoration(border: pw.Border(bottom: pw.BorderSide(color: PdfColors.grey200))),
+          decoration: const pw.BoxDecoration(
+            border: pw.Border(bottom: pw.BorderSide(color: PdfColors.grey200)),
+          ),
           children: [
             _buildStatCell(stat1.key, stat1.value, font),
             stat2 != null
-              ? _buildStatCell(stat2.key, stat2.value, font)
-              : pw.Container(
-                  padding: const pw.EdgeInsets.all(8),
-                  child: pw.Text('', style: _textStyle(font)),
-                ),
+                ? _buildStatCell(stat2.key, stat2.value, font)
+                : pw.Container(
+                    padding: const pw.EdgeInsets.all(8),
+                    child: pw.Text('', style: _textStyle(font)),
+                  ),
           ],
         ),
       );
@@ -136,19 +136,28 @@ class ParishPdfGenerator {
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          pw.Text(label, style: _textStyle(font).copyWith(fontWeight: pw.FontWeight.bold, color: PdfColors.grey700)),
-          pw.Text(value, style: _textStyle(font).copyWith(fontSize: 12, color: PdfColors.blue500)),
+          pw.Text(
+            label,
+            style: _textStyle(font).copyWith(
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.grey700,
+            ),
+          ),
+          pw.Text(
+            value,
+            style: _textStyle(
+              font,
+            ).copyWith(fontSize: 12, color: PdfColors.blue500),
+          ),
         ],
       ),
     );
   }
 
-
   // ===========================================================================
-  // 2. MAIN GENERATOR FUNCTION (MODIFIED)
+  // 2. MAIN GENERATOR FUNCTION
   // ===========================================================================
 
-  /// Generates the Parish Report PDF and opens it.
   static Future<void> generateParishPdf(
     BuildContext context,
     ParishReportModel report,
@@ -162,46 +171,69 @@ class ParishPdfGenerator {
       final pdf = pw.Document();
       final font = pw.Font.helvetica();
       final boldFont = pw.Font.helveticaBold();
-      final parishName = ref.watch(checkAuthRepositoryStateProvider)!.user!.parish;
 
-      String formattedDate = report.periodCovered.toLocal().toIso8601String().split('T')[0];
+      // Accessing parish name from the repository state
+      final parishName =
+          ref.read(checkAuthRepositoryStateProvider)?.user?.parish ??
+          "Parish Report";
+
+      String formattedDate = report.periodCovered
+          .toLocal()
+          .toIso8601String()
+          .split('T')[0];
 
       pdf.addPage(
         pw.MultiPage(
           pageFormat: PdfPageFormat.a4,
           build: (pw.Context context) {
             return [
-              // 1. HEADER / METADATA
               pw.Center(
                 child: pw.Column(
                   children: [
-                    // MODIFIED: Use the dynamically passed parishName
-                    pw.Text(parishName.toUpperCase(), style: _titleStyle(boldFont)),
-                    pw.Text('PARISH COMMISSION REPORT', style: _titleStyle(boldFont).copyWith(fontSize: 16)),
+                    pw.Text(
+                      parishName.toUpperCase(),
+                      style: _titleStyle(boldFont),
+                    ),
+                    pw.Text(
+                      'PARISH COMMISSION REPORT',
+                      style: _titleStyle(boldFont).copyWith(fontSize: 16),
+                    ),
                     pw.Divider(height: 16),
                   ],
                 ),
               ),
 
-              pw.Text('Name of Commission: ${report.commissionName}', style: _textStyle(font).copyWith(fontSize: 12)),
+              pw.Text(
+                'Name of Commission: ${report.commissionName}',
+                style: _textStyle(font).copyWith(fontSize: 12),
+              ),
               pw.SizedBox(height: 4),
-              pw.Text('Period Covered: $formattedDate', style: _textStyle(font).copyWith(fontSize: 12)),
+              pw.Text(
+                'Period Covered: $formattedDate',
+                style: _textStyle(font).copyWith(fontSize: 12),
+              ),
               pw.Divider(height: 16),
 
-              // 2. STATISTICS TABLE
               _buildParishStatTable(report, font),
               pw.SizedBox(height: 20),
 
-              // 3. REPORT SECTIONS
-              _buildListSection('ACTIVITIES CARRIED OUT', report.activities, font),
-
-              _buildListSection('PROBLEMS ENCOUNTERED & PROPOSED SOLUTIONS', report.problemsAndSolutions, font),
-
-              _buildListSection('ISSUES FOR COUNCIL', report.issuesForCouncil, font),
-
+              _buildListSection(
+                'ACTIVITIES CARRIED OUT',
+                report.activities,
+                font,
+              ),
+              _buildListSection(
+                'PROBLEMS ENCOUNTERED & PROPOSED SOLUTIONS',
+                report.problemsAndSolutions,
+                font,
+              ),
+              _buildListSection(
+                'ISSUES FOR COUNCIL',
+                report.issuesForCouncil,
+                font,
+              ),
               _buildListSection('FUTURE PLANS', report.futurePlans, font),
 
-              // 4. SIGNATURES
               pw.SizedBox(height: 40),
               pw.Text('SIGNATURES', style: _headerStyle(font)),
               pw.SizedBox(height: 16),
@@ -211,55 +243,66 @@ class ParishPdfGenerator {
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Text('____________________________________', style: _textStyle(font)),
+                      pw.Text(
+                        '____________________________________',
+                        style: _textStyle(font),
+                      ),
                       pw.Text('CHAIRPERSON', style: _textStyle(font)),
                     ],
                   ),
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Text('____________________________________', style: _textStyle(font)),
+                      pw.Text(
+                        '____________________________________',
+                        style: _textStyle(font),
+                      ),
                       pw.Text('SECRETARY', style: _textStyle(font)),
                     ],
                   ),
-                ]
+                ],
               ),
-
             ];
           },
         ),
       );
 
-      // Save and open the PDF
-      final directory = await getApplicationDocumentsDirectory();
+      // Changed from getApplicationDocumentsDirectory to getExternalStorageDirectory
+      // This saves to Android/data/com.package.name/files
+      final directory = await getExternalStorageDirectory();
 
-      // 2. Define a clean subdirectory structure (optional but recommended)
+      if (directory == null) {
+        throw Exception("Could not access the external storage directory.");
+      }
+
       final outputDir = Directory('${directory.path}/Reports/Parish');
 
-      // 3. Create the directory if it doesn't exist
       if (!await outputDir.exists()) {
         await outputDir.create(recursive: true);
       }
 
-      // 4. Define the final file path
-      final fileName = '${report.commissionName}_Parish_Report_$formattedDate.pdf';
+      final fileName = '${report.commissionName}_Report_$formattedDate.pdf'
+          .replaceAll(' ', '_');
       final file = File('${outputDir.path}/$fileName');
 
-      // 5. Write the file
       await file.writeAsBytes(await pdf.save());
 
-      // =====================================================================
-
       if (!context.mounted) return;
-      showToast(context, 'PDF saved successfully to app data directory. Opening file...', type: ToastificationType.success);
+      showToast(
+        context,
+        'File downloaded successfully. Opening...',
+        type: ToastificationType.success,
+      );
 
-      // Open the file using open_filex
       await OpenFilex.open(file.path);
-
     } catch (e, s) {
       if (!context.mounted) return;
       logger.e('Parish PDF Error', error: e, stackTrace: s);
-      showToast(context, 'Failed to generate or open PDF: ${e.toString()}', type: ToastificationType.error);
+      showToast(
+        context,
+        'Failed to save PDF: ${e.toString()}',
+        type: ToastificationType.error,
+      );
     }
   }
 }

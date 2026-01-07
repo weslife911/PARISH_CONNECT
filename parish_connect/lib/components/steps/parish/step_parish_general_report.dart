@@ -15,45 +15,55 @@ class StepParishGeneralReport extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Helper to trigger parent form's setState when a list changes
     void onListChanged() {
       parent.setState(() {});
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('4. General Report Sections', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 16),
+    // FIX: Wrap everything in a SingleChildScrollView to prevent bottom overflow
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '4. General Report Sections',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 16),
 
-        DynamicListInputField(
-          list: parent.problemsAndSolutions,
-          labelText: 'Problems Encountered & Proposed Solutions *',
-          icon: Icons.error_outline,
-          isRequired: true,
-          onListChanged: onListChanged,
-        ),
+          DynamicListInputField(
+            list: parent.problemsAndSolutions,
+            labelText: 'Problems Encountered & Proposed Solutions *',
+            icon: Icons.error_outline,
+            isRequired: true,
+            onListChanged: onListChanged,
+          ),
 
-        DynamicListInputField(
-          list: parent.issuesForCouncil,
-          labelText: 'Issues for Parish Council Discussion *',
-          icon: Icons.gavel_outlined,
-          isRequired: true,
-          onListChanged: onListChanged,
-        ),
+          const SizedBox(height: 16), // Added spacing between fields
 
-        DynamicListInputField(
-          list: parent.futurePlans,
-          labelText: 'Plans for the Next Year (Including Budget/Income) *',
-          icon: Icons.event_note_outlined,
-          isRequired: true,
-          onListChanged: onListChanged,
-        ),
+          DynamicListInputField(
+            list: parent.issuesForCouncil,
+            labelText: 'Issues for Parish Council Discussion *',
+            icon: Icons.gavel_outlined,
+            isRequired: true,
+            onListChanged: onListChanged,
+          ),
 
-        const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
-        // The final submission button is handled by the main ParishForm widget.
-      ],
+          DynamicListInputField(
+            list: parent.futurePlans,
+            labelText: 'Plans for the Next Year (Including Budget/Income) *',
+            icon: Icons.event_note_outlined,
+            isRequired: true,
+            onListChanged: onListChanged,
+          ),
+
+          const SizedBox(
+            height: 80,
+          ), // Extra space at bottom to account for the "Submit" button
+        ],
+      ),
     );
   }
 }

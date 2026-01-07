@@ -7,8 +7,8 @@ class UpdateUserModel {
   final String fullName;
   final String username;
   final String email;
-  final String deanery; // Added
-  final String parish; // Added
+  final String deanery;
+  final String parish;
   final String? bio;
   final String? profilePic;
 
@@ -16,8 +16,8 @@ class UpdateUserModel {
     required this.fullName,
     required this.username,
     required this.email,
-    required this.deanery, // Added
-    required this.parish, // Added
+    required this.deanery,
+    required this.parish,
     this.bio,
     this.profilePic,
   });
@@ -26,8 +26,8 @@ class UpdateUserModel {
     "full_name": fullName,
     "username": username,
     "email": email,
-    "deanery": deanery, // Added
-    "parish": parish, // Added
+    "deanery": deanery,
+    "parish": parish,
     "bio": bio ?? "",
     "profile_pic": profilePic ?? "",
   };

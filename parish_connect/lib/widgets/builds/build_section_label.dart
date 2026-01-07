@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-Widget buildSectionLabel(String text, BuildContext context) {
+Widget buildSectionLabel(BuildContext context, String text) {
   return Align(
     alignment: Alignment.centerLeft,
     child: Text(
