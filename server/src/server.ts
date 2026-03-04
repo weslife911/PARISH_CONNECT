@@ -22,6 +22,8 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+app.get("/", (req, res) => res.send("Parish Connect Backend Live"));
+
 app.use("/api/v1", AuthRoutes);
 app.use("/api/v1", ParishRoutes);
 app.use("/api/v1", SCCRoutes);
