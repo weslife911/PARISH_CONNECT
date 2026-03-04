@@ -1,31 +1,19 @@
-// server.ts
-
 import express, { Application, Request, Response } from "express"
 import { config } from "dotenv"
-import connectToDb from "./db/connectToDb";
+import { connectToDb } from "./db/connectToDb";
 import AuthRoutes from "./routes/AuthRoutes"
 import SCCRoutes from "./routes/SCCRoutes"
 import ParishRoutes from "./routes/ParishRoutes";
 import MissionRoutes from "./routes/MissionRoutes"
 import cors from "cors"
-// --- REMOVED IMPORT: express-fileupload is no longer used ---
-// import fileUpload from 'express-fileupload';
 
 config();
 
 const app: Application = express();
 
-// The JSON limit is essential to handle large Base64 image strings.
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// --- REMOVED MIDDLEWARE: express-fileupload is no longer used ---
-/*
-app.use(fileUpload({
-    useTempFiles: true,
-    tempFileDir: '/tmp/'
-}));
-*/
 
 app.use(cors({
     origin: "*",
