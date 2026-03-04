@@ -1,20 +1,15 @@
-// home_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:parish_connect/components/home/hero_header.dart';
+import 'package:parish_connect/repositories/auth/check_auth_repository.dart';
 import '../../main.dart';
 import 'section_screen.dart';
 import '../admin/admin_dashboard.dart';
 import '../../widgets/app_drawer.dart';
-import '../../widgets/helpers.dart'; // For _AnimatedRoute
+import '../../widgets/helpers.dart';
 import "package:parish_connect/components/home/activity_tile.dart";
 import "package:parish_connect/components/home/quick_card.dart";
-
-// =============================================================================
-// HOME
-// =============================================================================
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -23,6 +18,7 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final appStateNotifier = ref.watch(appStateProvider.notifier);
     final currentThemeMode = ref.watch(appStateProvider).themeMode;
+    final user = ref.watch(checkAuthRepositoryStateProvider);
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(
@@ -42,14 +38,12 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
       body: ListView(
-        // FIX: Add padding to the bottom of the ListView.
-        // This pushes the scrollable content up, so it doesn't get covered
-        // by the externally placed bottom navigation bar.
-        // The value (e.g., 90) should be slightly greater than the height of your
-        // AnimatedBottomNavBar (72) plus its bottom margin (16).
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
         children: [
-          HeroHeader().animate().fadeIn(duration: 400.ms).move(begin: const Offset(0, 12)),
+          HeroHeader()
+              .animate()
+              .fadeIn(duration: 400.ms)
+              .move(begin: const Offset(0, 12)),
           const SizedBox(height: 16),
           Text('Quick Access', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 12),
@@ -64,44 +58,68 @@ class HomeScreen extends ConsumerWidget {
             ),
             children: [
               QuickCard(
-                icon: Icons.groups_2_outlined,
-                title: 'SCC',
-                onTap: () => _openSection(context, 'SCC'),
-              ).animate().fadeIn(duration: 300.ms).move(begin: const Offset(0, 10)),
+                    icon: Icons.groups_2_outlined,
+                    title: 'SCC',
+                    onTap: () => _openSection(context, 'SCC'),
+                  )
+                  .animate()
+                  .fadeIn(duration: 300.ms)
+                  .move(begin: const Offset(0, 10)),
               QuickCard(
-                icon: Icons.church_outlined,
-                title: 'Parish',
-                onTap: () => _openSection(context, 'Parish'),
-              ).animate(delay: 60.ms).fadeIn(duration: 300.ms).move(begin: const Offset(0, 10)),
+                    icon: Icons.church_outlined,
+                    title: 'Parish',
+                    onTap: () => _openSection(context, 'Parish'),
+                  )
+                  .animate(delay: 60.ms)
+                  .fadeIn(duration: 300.ms)
+                  .move(begin: const Offset(0, 10)),
               QuickCard(
-                icon: Icons.location_city_outlined,
-                title: 'Mission Station',
-                onTap: () => _openSection(context, 'Mission Station'),
-              ).animate(delay: 120.ms).fadeIn(duration: 300.ms).move(begin: const Offset(0, 10)),
+                    icon: Icons.location_city_outlined,
+                    title: 'Mission Station',
+                    onTap: () => _openSection(context, 'Mission Station'),
+                  )
+                  .animate(delay: 120.ms)
+                  .fadeIn(duration: 300.ms)
+                  .move(begin: const Offset(0, 10)),
               QuickCard(
-                icon: Icons.account_balance_outlined,
-                title: 'Deanery',
-                onTap: () => _openSection(context, 'Deanery'),
-              ).animate(delay: 180.ms).fadeIn(duration: 300.ms).move(begin: const Offset(0, 10)),
+                    icon: Icons.account_balance_outlined,
+                    title: 'Deanery',
+                    onTap: () => _openSection(context, 'Deanery'),
+                  )
+                  .animate(delay: 180.ms)
+                  .fadeIn(duration: 300.ms)
+                  .move(begin: const Offset(0, 10)),
+              if (user!.user!.role == "admin")
                 QuickCard(
-                  icon: Icons.dashboard_customize_outlined,
-                  title: 'Admin',
-                  onTap: () => Navigator.of(context).push(
-                      AnimatedRoute(const AdminDashboardScreen())),
-                ).animate(delay: 240.ms).fadeIn(duration: 300.ms).move(begin: const Offset(0, 10)),
+                      icon: Icons.dashboard_customize_outlined,
+                      title: 'Admin',
+                      onTap: () => Navigator.of(
+                        context,
+                      ).push(AnimatedRoute(const AdminDashboardScreen())),
+                    )
+                    .animate(delay: 240.ms)
+                    .fadeIn(duration: 300.ms)
+                    .move(begin: const Offset(0, 10)),
             ],
           ),
           const SizedBox(height: 20),
-          Text('Upcoming Activities', style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            'Upcoming Activities',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(height: 8),
           ...List.generate(
             4,
-            (i) => ActivityTile(
-              title: 'Community Service Day',
-              subtitle: 'Saturday 10:00 AM · Parish Grounds',
-              onTap: () {},
-            ).animate(delay: (i * 80).ms).fadeIn(duration: 350.ms).move(begin: const Offset(0, 10)),
-          )
+            (i) =>
+                ActivityTile(
+                      title: 'Community Service Day',
+                      subtitle: 'Saturday 10:00 AM · Parish Grounds',
+                      onTap: () {},
+                    )
+                    .animate(delay: (i * 80).ms)
+                    .fadeIn(duration: 350.ms)
+                    .move(begin: const Offset(0, 10)),
+          ),
         ],
       ),
     );
