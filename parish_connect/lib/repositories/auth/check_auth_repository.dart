@@ -3,101 +3,91 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:parish_connect/config/api_config.dart';
 import 'package:parish_connect/models/auth/check_auth_response_model.dart';
 import 'package:parish_connect/repositories/storage/local_storage_repository.dart';
-import 'package:parish_connect/utils/logger_util.dart'; // ADDED: Logger utility
+import 'package:parish_connect/utils/logger_util.dart';
 import "package:http/http.dart";
 
-final checkAuthRepositoryProvider = Provider((ref) => CheckAuthRepository(
-  client: Client(),
-  localStorageRepository: LocalStorageRepository()
-));
+final checkAuthRepositoryProvider = Provider<CheckAuthRepository>(
+  (ref) => CheckAuthRepository(
+    client: Client(),
+    localStorageRepository: LocalStorageRepository(),
+    ref: ref,
+  ),
+);
 
-final checkAuthRepositoryStateProvider = StateProvider<CheckAuthResponseModel?>((ref) => null);
-
+final checkAuthRepositoryStateProvider = StateProvider<CheckAuthResponseModel?>(
+  (ref) => null,
+);
 
 class CheckAuthRepository {
   final Client _client;
   final LocalStorageRepository _localStorageRepository;
+  final Ref _ref;
 
   CheckAuthRepository({
     required Client client,
     required LocalStorageRepository localStorageRepository,
-  }): _client = client, _localStorageRepository = localStorageRepository;
+    required Ref ref,
+  }) : _client = client,
+       _localStorageRepository = localStorageRepository,
+       _ref = ref;
 
   Future<CheckAuthResponseModel> checkAuth() async {
-    // -------------------------------------------------------------------
-    logger.d('Starting checkAuth() process...'); // FIXED
-    // -------------------------------------------------------------------
+    logger.d('Starting checkAuth() process...');
+
     final ApiConfig config = ApiConfig();
     final String path = config.apiBasePath + config.checkAuthUrl;
     final Uri url = Uri.https(config.apiBaseUrl, path);
-    logger.d('Constructed URL: $url'); // FIXED
 
     final jwtAuthToken = await _localStorageRepository.getJWTAuthToken();
 
-    // Check if a token exists locally before making the request
     if (jwtAuthToken == null || jwtAuthToken.isEmpty) {
-      logger.i('No JWT token found in local storage. Returning failure.'); // FIXED
+      logger.i('No JWT token found in local storage.');
       return CheckAuthResponseModel(
         success: false,
         message: "No authentication token found. Please log in.",
-        user: null
+        user: null,
       );
     }
-
-    logger.d('JWT Token retrieved (first 10 chars): ${jwtAuthToken.substring(0, 10)}...'); // FIXED
 
     try {
       final response = await _client.get(
         url,
-        headers: {
-          "Authorization": "Bearer $jwtAuthToken"
-        }
+        headers: {"Authorization": "Bearer $jwtAuthToken"},
       );
 
-      // -------------------------------------------------------------------
-      logger.d('API call completed. Status Code: ${response.statusCode}'); // FIXED
-      // -------------------------------------------------------------------
-
-      // Explicitly handle 401 Unauthorized (Token expired/invalid)
       if (response.statusCode == 401) {
         await _localStorageRepository.removeJWTAuthToken();
-        logger.w('Status 401 received. Token cleared and returning session expired message.'); // FIXED
+        logger.w('Session expired (401). Token cleared.');
         return CheckAuthResponseModel(
           success: false,
-          message: "Session expired or invalid. Please log in again.",
-          user: null
+          message: "Session expired. Please log in again.",
+          user: null,
         );
       }
 
       final jsonResponse = checkAuthResponseModelFromJson(response.body);
 
-      if(response.statusCode == 200 || response.statusCode == 201) {
-        // -------------------------------------------------------------------
-        logger.i('Status ${response.statusCode}. Auth check SUCCESS. User role: ${jsonResponse.user?.role}'); // FIXED
-        // -------------------------------------------------------------------
-        return CheckAuthResponseModel(
-          success: jsonResponse.success,
-          message: "",
-          user: jsonResponse.user
-        );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        logger.i('Auth check SUCCESS. User: ${jsonResponse.user?.username}');
+
+        _ref.read(checkAuthRepositoryStateProvider.notifier).state =
+            jsonResponse;
+
+        return jsonResponse;
       } else {
-        // -------------------------------------------------------------------
-        logger.w('Status ${response.statusCode}. Auth check FAILURE. Message: ${jsonResponse.message}'); // FIXED
-        // -------------------------------------------------------------------
+        logger.w('Auth check FAILURE. Status: ${response.statusCode}');
         return CheckAuthResponseModel(
-          success: jsonResponse.success,
-          message: jsonResponse.message,
-          user: null
+          success: false,
+          message: jsonResponse.message ?? "Authentication failed",
+          user: null,
         );
       }
-    } catch(e) {
-      // -------------------------------------------------------------------
-      logger.e('An exception occurred during checkAuth: ${e.toString()}', error: e); // FIXED (Using logger.e and error parameter)
-      // -------------------------------------------------------------------
+    } catch (e) {
+      logger.e('Exception during checkAuth', error: e);
       return CheckAuthResponseModel(
         success: false,
-        message: "Failed to process server response: ${e.toString()}",
-        user: null
+        message: "Network error: ${e.toString()}",
+        user: null,
       );
     }
   }

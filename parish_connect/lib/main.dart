@@ -7,16 +7,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'theme/theme.dart';
 
 void main() {
-  runApp(
-    const ProviderScope(child: ChurchAdminApp())
-  );
+  runApp(const ProviderScope(child: MyApp()));
 }
 
-// =============================================================================
-// APP STATE (Riverpod ChangeNotifierProvider)
-// =============================================================================
-
-// Provider for AppState
 final appStateProvider = ChangeNotifierProvider<AppState>((ref) => AppState());
 
 class AppState extends ChangeNotifier {
@@ -25,7 +18,6 @@ class AppState extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
   bool _loggedIn = false;
 
-  // Key for SharedPreferences
   static const String _onboardingKey = 'has_seen_onboarding';
 
   bool get initialized => _initialized;
@@ -33,7 +25,6 @@ class AppState extends ChangeNotifier {
   ThemeMode get themeMode => _themeMode;
   bool get loggedIn => _loggedIn;
 
-  // Load onboarding status from SharedPreferences
   Future<void> loadOnboardingStatus() async {
     final prefs = await SharedPreferences.getInstance();
     _showOnboarding = !(prefs.getBool(_onboardingKey) ?? false);
@@ -63,8 +54,8 @@ class AppState extends ChangeNotifier {
   }
 }
 
-class ChurchAdminApp extends ConsumerWidget {
-  const ChurchAdminApp({super.key});
+class MyApp extends ConsumerWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -72,7 +63,7 @@ class ChurchAdminApp extends ConsumerWidget {
 
     return ToastificationWrapper(
       child: MaterialApp.router(
-        title: 'Church Admin',
+        title: 'Parish Connect',
         debugShowCheckedModeBanner: false,
         theme: lightTheme,
         darkTheme: darkTheme,

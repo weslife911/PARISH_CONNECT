@@ -1,5 +1,5 @@
 class ApiConfig {
-  final String apiBaseUrl = "parish-connect.onrender.com";
+  final String apiBaseUrl = "parish-connect-zeta.vercel.app";
   final String apiBasePath = "/api/v1";
 
   // AUTH
@@ -18,5 +18,4 @@ class ApiConfig {
   // PARISH
   final String addParishRecordsUrl = "/parish/add-record";
   final String getParishRecordsUrl = "/parish/records";
-
 }
