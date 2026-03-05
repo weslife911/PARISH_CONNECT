@@ -2,8 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:parish_connect/models/auth/update_user_model.dart';
+import 'package:parish_connect/models/auth/profile/update_user_request_model.dart';
 import 'package:parish_connect/repositories/auth/auth_repository.dart';
+import 'package:parish_connect/services/cloudinary/user_profile_cloudinary_service.dart';
 import 'package:parish_connect/widgets/builds/build_deanery_dropdown.dart';
 import 'package:parish_connect/widgets/builds/build_parish_profile_dropdown.dart';
 import 'package:parish_connect/widgets/builds/build_profile_field.dart';
@@ -45,16 +46,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     selectedParish = user.parish;
   }
 
-  // 1. Fixed Image Picker with Mounted Check
   Future<void> _pickImage() async {
     PermissionStatus status;
+
     if (Platform.isIOS) {
       status = await Permission.photos.request();
     } else {
-      status = await Permission.storage.request();
+      if (Platform.isAndroid) {
+        status = await Permission.photos.request();
+
+        if (status.isDenied) {
+          status = await Permission.storage.request();
+        }
+      } else {
+        status = await Permission.storage.request();
+      }
     }
 
-    // Async Gap occurs after 'request()'
     if (!mounted) return;
 
     if (status.isGranted) {
@@ -64,16 +72,37 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         imageQuality: 70,
       );
 
-      // Async Gap occurs after 'pickImage()'
       if (!mounted || pickedFile == null) return;
 
       setState(() => _imageFile = File(pickedFile.path));
+    } else if (status.isPermanentlyDenied) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Permission Required'),
+          content: const Text(
+            'Please enable gallery access in settings to update your profile picture.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => openAppSettings(),
+              child: const Text('Settings'),
+            ),
+          ],
+        ),
+      );
     } else {
       showToast(context, 'Permission denied', type: ToastificationType.warning);
     }
   }
 
-  // 2. Fixed Update Profile with Mounted Checks
+  final UserProfileCloudinaryService _cloudinaryService =
+      UserProfileCloudinaryService();
+
   Future<void> _updateProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -81,53 +110,74 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     try {
       final currentUser = ref.read(checkAuthRepositoryStateProvider)!.user!;
+      String? finalProfilePicUrl = currentUser.profilePic;
 
-      final updateData = UpdateUserModel(
+      if (_imageFile != null) {
+        final uploadedUrl = await _cloudinaryService.uploadSingleImage(
+          _imageFile!,
+        );
+
+        if (uploadedUrl == null) {
+          if (mounted) {
+            showToast(
+              context,
+              'Failed to upload image to cloud',
+              type: ToastificationType.error,
+            );
+          }
+          setState(() => _isLoading = false);
+          return;
+        }
+        finalProfilePicUrl = uploadedUrl;
+      }
+
+      final updateData = UpdateUserRequestModel(
         fullName: _fullNameController.text,
         username: _usernameController.text,
         email: currentUser.email,
         deanery: selectedDeanery ?? "",
         parish: selectedParish ?? "",
         bio: _bioController.text,
-        profilePic: currentUser.profilePic,
+        profilePic: finalProfilePicUrl,
       );
 
-      // The Major Async Gap
       final result = await ref
           .read(authRepositoryProvider)
           .updateProfile(currentUser.id!, updateData);
 
-      // CRITICAL FIX: Check if the widget is still in the tree before using context or setState
       if (!mounted) return;
 
       if (result.success) {
-        setState(() => _isEditing = false);
+        setState(() {
+          _isEditing = false;
+          _imageFile = null;
+        });
 
-        // Use invalidate to refresh the provider state
+        await ref.read(checkAuthRepositoryProvider).checkAuth();
         ref.invalidate(checkAuthRepositoryStateProvider);
 
-        showToast(
-          context,
-          result.message ?? 'Profile updated!',
-          type: ToastificationType.success,
-        );
+        if (mounted) {
+          showToast(context, result.message, type: ToastificationType.success);
+        }
       } else {
-        showToast(
-          context,
-          result.message ?? 'Update failed',
-          type: ToastificationType.error,
-        );
+        if (mounted) {
+          showToast(context, result.message, type: ToastificationType.error);
+        }
       }
     } catch (e) {
       if (!mounted) return;
-      showToast(context, 'An error occurred', type: ToastificationType.error);
+      showToast(
+        context,
+        'An error occurred during update',
+        type: ToastificationType.error,
+      );
     } finally {
-      // Always guard setState in finally blocks
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;

@@ -235,13 +235,14 @@ export const updateProfile = async (req: Request, res: Response) => {
 
         const { full_name, username, email, bio, profile_pic, deanery, parish } = req.body;
 
-        const checkIfUsernameExists = await User.findOne({ username });
-
-        if (checkIfUsernameExists) {
-            return res.json({
-                success: false,
-                message: "Username already exists"
-            });
+        if (username !== req.user?.username) {
+            const checkIfUsernameExists = await User.findOne({ username });
+            if (checkIfUsernameExists) {
+                return res.json({
+                    success: false,
+                    message: "Username already exists! Try something else."
+                });
+            }
         }
 
         const updatedUser = await User.findByIdAndUpdate(userId, {
@@ -254,7 +255,7 @@ export const updateProfile = async (req: Request, res: Response) => {
                 deanery,
                 parish
             }
-        }, { new: true });
+        }, { new: true, runValidators: true });
 
         if (!updatedUser) return res.json({
             success: false,

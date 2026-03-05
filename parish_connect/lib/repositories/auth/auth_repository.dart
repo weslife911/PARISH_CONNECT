@@ -2,7 +2,8 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:parish_connect/config/api_config.dart';
 import 'package:parish_connect/models/auth/auth_response_model.dart';
-import 'package:parish_connect/models/auth/update_user_model.dart';
+import 'package:parish_connect/models/auth/profile/update_user_request_model.dart';
+import 'package:parish_connect/models/auth/profile/update_user_response_model.dart';
 import 'package:parish_connect/repositories/auth/check_auth_repository.dart';
 import 'package:parish_connect/repositories/storage/local_storage_repository.dart';
 import 'package:parish_connect/utils/logger_util.dart';
@@ -12,7 +13,7 @@ final authRepositoryProvider = Provider<AuthRepository>(
   (ref) => AuthRepository(
     client: Client(),
     localStorageRepository: LocalStorageRepository(),
-    ref: ref, // Passes the ProviderRef to the repository
+    ref: ref,
   ),
 );
 
@@ -154,9 +155,9 @@ class AuthRepository {
     }
   }
 
-  Future<AuthResponseModel> updateProfile(
+  Future<UpdateUserResponseModel> updateProfile(
     String userId,
-    UpdateUserModel updateData,
+    UpdateUserRequestModel updateData,
   ) async {
     final ApiConfig config = ApiConfig();
     final String path = "${config.apiBasePath}/update-profile/$userId";
@@ -175,11 +176,33 @@ class AuthRepository {
         },
       );
 
-      logger.d('Update Response: ${response.body}');
-      return authResponseModelFromJson(response.body);
+      logger.d(
+        'Update Response (Status: ${response.statusCode}, Body: ${response.body})',
+      );
+      final jsonResponse = updateResponseModelFromJson(response.body);
+
+      if (jsonResponse.success) {
+        final getUpdatedUserDetails = await _ref
+            .read(checkAuthRepositoryProvider)
+            .checkAuth();
+
+        if (!getUpdatedUserDetails.success) {
+          return UpdateUserResponseModel(
+            success: false,
+            message:
+                "Profile updated, but failed to refresh user data: ${getUpdatedUserDetails.message}",
+          );
+        }
+        return jsonResponse;
+      } else {
+        return jsonResponse;
+      }
     } catch (e) {
-      logger.e('Update Error', error: e);
-      return AuthResponseModel(success: false, message: e.toString());
+      logger.e('Update Error: Exception caught.', error: e);
+      return UpdateUserResponseModel(
+        success: false,
+        message: "An error occurred during update: ${e.toString()}",
+      );
     }
   }
 }
