@@ -14,7 +14,6 @@ const userSchema = new Schema<UserDocument>({
         type: String,
         required: true
     },
-    // New fields: deanery and parish
     deanery: {
         type: String,
         required: true
@@ -23,7 +22,6 @@ const userSchema = new Schema<UserDocument>({
         type: String,
         required: true
     },
-    // End new fields
     password: {
         type: String,
         required: true,

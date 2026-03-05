@@ -23,12 +23,11 @@ export const signupUser = async (req: Request, res: Response) => {
             });
         }
 
-        // Destructure new fields: deanery and parish
         const { full_name, username, email, password, deanery, parish, role } = validation.data;
 
         const user = await User.findOne({ email });
 
-        if(user) return res.status(409).json({
+        if (user) return res.status(409).json({
             success: false,
             message: "User with given email exists already!"
         });
@@ -46,7 +45,7 @@ export const signupUser = async (req: Request, res: Response) => {
             role: role || "user"
         });
 
-        if(!newUser) return res.status(500).json({
+        if (!newUser) return res.status(500).json({
             success: false,
             message: "Error creating user!"
         });
@@ -71,7 +70,7 @@ export const signupUser = async (req: Request, res: Response) => {
     }
 }
 
-export const loginUser = async(req: Request, res: Response) => {
+export const loginUser = async (req: Request, res: Response) => {
     try {
 
         const validation = validateLoginUser.safeParse(req.body);
@@ -90,14 +89,14 @@ export const loginUser = async(req: Request, res: Response) => {
 
         const user = await User.findOne({ email });
 
-        if(!user) return res.status(404).json({
+        if (!user) return res.status(404).json({
             success: false,
             message: "User with given email does not exist!"
         });
 
         const verifyPassword = await compare(password, user.password);
 
-        if(!verifyPassword) return res.status(401).json({
+        if (!verifyPassword) return res.status(401).json({
             success: false,
             message: "Password is incorrect!"
         });
@@ -120,12 +119,12 @@ export const loginUser = async(req: Request, res: Response) => {
     }
 }
 
-export const verifyEmail = async(req: Request, res: Response) => {
+export const verifyEmail = async (req: Request, res: Response) => {
     try {
 
         const validation = validateEmailAuth.safeParse(req.body);
 
-        if(!validation.success) return res.json({
+        if (!validation.success) return res.json({
             success: false,
             message: validation.error.issues[0]?.message
         })
@@ -134,7 +133,7 @@ export const verifyEmail = async(req: Request, res: Response) => {
 
         const user = await User.findOne({ email });
 
-        if(!user) return res.status(404).json({
+        if (!user) return res.status(404).json({
             success: false,
             message: "User with given email does not exist!"
         });
@@ -158,12 +157,12 @@ export const verifyEmail = async(req: Request, res: Response) => {
 }
 
 
-export const resetPassword = async(req: Request, res: Response) => {
+export const resetPassword = async (req: Request, res: Response) => {
     try {
 
         const validation = validateResetPassword.safeParse(req.body);
 
-        if(!validation.success) return res.json({
+        if (!validation.success) return res.json({
             success: false,
             message: validation.error.issues[0]?.message
         })
@@ -172,7 +171,7 @@ export const resetPassword = async(req: Request, res: Response) => {
 
         const decoded = decodeToken(token) as any;
 
-        if(!decoded || !decoded.id) {
+        if (!decoded || !decoded.id) {
             return res.status(401).json({
                 success: false,
                 message: "Invalid or expired reset token provided."
@@ -208,7 +207,7 @@ export const resetPassword = async(req: Request, res: Response) => {
 
     } catch (e: any) {
         if (e.name === 'JsonWebTokenError' || e.name === 'TokenExpiredError') {
-             return res.status(401).json({
+            return res.status(401).json({
                 success: false,
                 message: "Invalid or expired reset token."
             });
@@ -223,21 +222,28 @@ export const resetPassword = async(req: Request, res: Response) => {
     }
 }
 
-export const checkAuth = (req: Request, res:Response) => {
+export const checkAuth = (req: Request, res: Response) => {
     return res.json({
         success: true,
         user: req.user
     });
 }
 
-export const updateProfile = async(req: Request, res: Response) => {
+export const updateProfile = async (req: Request, res: Response) => {
     try {
         const { userId } = req.params;
 
-        // Extract deanery and parish from req.body
         const { full_name, username, email, bio, profile_pic, deanery, parish } = req.body;
 
-        // Note: Ensure your 'validateUserData' Zod schema is also updated to allow these fields
+        const checkIfUsernameExists = await User.findOne({ username });
+
+        if (checkIfUsernameExists) {
+            return res.json({
+                success: false,
+                message: "Username already exists"
+            });
+        }
+
         const updatedUser = await User.findByIdAndUpdate(userId, {
             $set: {
                 full_name,
@@ -250,7 +256,7 @@ export const updateProfile = async(req: Request, res: Response) => {
             }
         }, { new: true });
 
-        if(!updatedUser) return res.json({
+        if (!updatedUser) return res.json({
             success: false,
             message: "Error while updating user"
         });

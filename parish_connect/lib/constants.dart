@@ -68,3 +68,4 @@ final Map<String, List<String>> deaneryParishMap = const {
 };
 
 final jwtAuthTokenKey = "jwtAuthTokenKey";
+final String onboardingKey = 'has_seen_onboarding';
