@@ -29,21 +29,39 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   File? _imageFile;
   final _formKey = GlobalKey<FormState>();
 
-  late TextEditingController _fullNameController;
-  late TextEditingController _usernameController;
-  late TextEditingController _bioController;
+  final _fullNameController = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _bioController = TextEditingController();
   String? selectedDeanery;
   String? selectedParish;
 
   @override
   void initState() {
     super.initState();
-    final user = ref.read(checkAuthRepositoryStateProvider)!.user!;
-    _fullNameController = TextEditingController(text: user.fullName);
-    _usernameController = TextEditingController(text: user.username);
-    _bioController = TextEditingController(text: user.bio ?? "");
-    selectedDeanery = user.deanery;
-    selectedParish = user.parish;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _populateControllers();
+    });
+  }
+
+  @override
+  void dispose() {
+    _fullNameController.dispose();
+    _usernameController.dispose();
+    _bioController.dispose();
+    super.dispose();
+  }
+
+  void _populateControllers() {
+    final user = ref.read(checkAuthRepositoryStateProvider)?.user;
+    if (user != null) {
+      _fullNameController.text = user.fullName ?? '';
+      _usernameController.text = user.username ?? '';
+      _bioController.text = user.bio ?? '';
+      setState(() {
+        selectedDeanery = user.deanery;
+        selectedParish = user.parish;
+      });
+    }
   }
 
   Future<void> _pickImage() async {
@@ -116,12 +134,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         final uploadedUrl = await _cloudinaryService.uploadSingleImage(
           _imageFile!,
         );
-
         if (uploadedUrl == null) {
           if (mounted) {
             showToast(
               context,
-              'Failed to upload image to cloud',
+              'Failed to upload image',
               type: ToastificationType.error,
             );
           }
@@ -150,38 +167,37 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (result.success) {
         setState(() {
           _isEditing = false;
+          _isLoading = false;
           _imageFile = null;
         });
-
-        await ref.read(checkAuthRepositoryProvider).checkAuth();
-        ref.invalidate(checkAuthRepositoryStateProvider);
-
-        if (mounted) {
-          showToast(context, result.message, type: ToastificationType.success);
-        }
+        showToast(
+          context,
+          'Profile Updated Successfully',
+          type: ToastificationType.success,
+        );
       } else {
-        if (mounted) {
-          showToast(context, result.message, type: ToastificationType.error);
-        }
+        setState(() => _isLoading = false);
+        showToast(context, result.message, type: ToastificationType.error);
       }
     } catch (e) {
-      if (!mounted) return;
+      if (mounted) setState(() => _isLoading = false);
       showToast(
         context,
-        'An error occurred during update',
+        'An unexpected error occurred',
         type: ToastificationType.error,
       );
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(checkAuthRepositoryStateProvider);
+
+    if (authState?.user == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     final cs = Theme.of(context).colorScheme;
-    final user = ref.watch(checkAuthRepositoryStateProvider)!.user!;
+    final user = authState!.user!;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 60, 20, 110),

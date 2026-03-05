@@ -162,7 +162,6 @@ class AuthRepository {
     final ApiConfig config = ApiConfig();
     final String path = "${config.apiBasePath}/update-profile/$userId";
     final Uri url = Uri.https(config.apiBaseUrl, path);
-
     final String body = updateUserModelToJson(updateData);
     final String? token = await _localStorageRepository.getJWTAuthToken();
 
@@ -176,32 +175,24 @@ class AuthRepository {
         },
       );
 
-      logger.d(
-        'Update Response (Status: ${response.statusCode}, Body: ${response.body})',
-      );
       final jsonResponse = updateResponseModelFromJson(response.body);
 
       if (jsonResponse.success) {
-        final getUpdatedUserDetails = await _ref
+        final refreshedData = await _ref
             .read(checkAuthRepositoryProvider)
             .checkAuth();
 
-        if (!getUpdatedUserDetails.success) {
-          return UpdateUserResponseModel(
-            success: false,
-            message:
-                "Profile updated, but failed to refresh user data: ${getUpdatedUserDetails.message}",
-          );
-        }
-        return jsonResponse;
-      } else {
+        _ref.read(checkAuthRepositoryStateProvider.notifier).state =
+            refreshedData;
+
         return jsonResponse;
       }
+      return jsonResponse;
     } catch (e) {
-      logger.e('Update Error: Exception caught.', error: e);
+      logger.e('Update Error', error: e);
       return UpdateUserResponseModel(
         success: false,
-        message: "An error occurred during update: ${e.toString()}",
+        message: "Connection error: ${e.toString()}",
       );
     }
   }
