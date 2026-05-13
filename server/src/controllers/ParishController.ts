@@ -1,10 +1,8 @@
-// controllers/ParishController.ts
-
 import Parish from "../models/Parish";
 import { Request, Response } from "express";
 import { validateParishRecord } from "../validation/Parish/validateParishRecord";
 
-export const addParishRecord = async(req: Request, res: Response) => {
+export const addParishRecord = async (req: Request, res: Response) => {
     try {
         const transformedBody = {
             ...req.body,
@@ -19,16 +17,15 @@ export const addParishRecord = async(req: Request, res: Response) => {
             });
         }
 
-        const { 
-            commissionName, periodCovered, totalMembers, missionsRepresented, 
-            generalMeetings, activeMembers, excoMeetings, activities, 
+        const {
+            commissionName, periodCovered, totalMembers, missionsRepresented,
+            generalMeetings, activeMembers, excoMeetings, activities,
             problemsAndSolutions, issuesForCouncil, futurePlans
         } = validation.data;
 
-        // --- RECORD CREATION ---
         const record = await Parish.create({
             commissionName,
-            periodCovered: new Date(periodCovered), // Convert string to Date
+            periodCovered: new Date(periodCovered),
             totalMembers,
             missionsRepresented,
             generalMeetings,
@@ -40,7 +37,7 @@ export const addParishRecord = async(req: Request, res: Response) => {
             futurePlans
         });
 
-        if(!record) return res.status(500).json({
+        if (!record) return res.status(500).json({
             success: false,
             message: "Error while creating record in database"
         });
@@ -60,19 +57,19 @@ export const addParishRecord = async(req: Request, res: Response) => {
     }
 }
 
-export const getParishRecords = async(req: Request, res: Response) => {
+export const getParishRecords = async (req: Request, res: Response) => {
     try {
         const parishes = await Parish.find({});
 
-        if(!parishes || parishes.length === 0) return res.json({
+        if (!parishes) return res.json({
             success: false,
-            message: "No Parish Records found"
+            message: "Error getting parishes"
         });
 
         return res.status(200).json({
             success: true,
             message: "Records fetched successfully.",
-            parishes 
+            parishes
         });
 
     } catch (e: any) {
@@ -85,13 +82,13 @@ export const getParishRecords = async(req: Request, res: Response) => {
     }
 }
 
-export const getParishRecord = async(req: Request, res: Response) => {
+export const getParishRecord = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
 
         const parish = await Parish.findById(id);
 
-        if(!parish) return res.json({
+        if (!parish) return res.json({
             success: false,
             message: "Record with given ID does not exist!"
         })
@@ -99,7 +96,7 @@ export const getParishRecord = async(req: Request, res: Response) => {
         return res.status(200).json({
             success: true,
             message: "Record fetched successfully.",
-            parish 
+            parish
         });
 
     } catch (e: any) {
