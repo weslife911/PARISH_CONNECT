@@ -1,16 +1,16 @@
-// lib/components/steps/parish/step_parish_activities.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:parish_connect/components/forms/parish_form.dart';
-import 'package:parish_connect/widgets/builds/build_list_input.dart'; // Assuming DynamicListInputField exists
+import 'package:parish_connect/widgets/builds/build_list_input.dart';
 
 class StepParishActivities extends ConsumerWidget {
   final ParishFormState parent;
+  final VoidCallback onListChanged;
 
   const StepParishActivities({
     super.key,
     required this.parent,
+    required this.onListChanged,
   });
 
   @override
@@ -18,22 +18,18 @@ class StepParishActivities extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('3. Activities Carried Out', style: Theme.of(context).textTheme.titleLarge),
+        Text(
+          '3. Activities Carried Out',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
         const SizedBox(height: 16),
-
-        // Single list input for all activities
         DynamicListInputField(
           list: parent.activities,
-          labelText: 'Activities Carried Out (Past Three Months) *',
+          labelText: 'Activities (Past Three Months) *',
           icon: Icons.local_activity_outlined,
           isRequired: true,
-          // Use a setState wrapper to ensure the parent list is updated and triggers a UI refresh
-          onListChanged: () {
-            parent.setState(() {});
-          },
+          onListChanged: onListChanged,
         ),
-
-        const SizedBox(height: 24),
       ],
     );
   }

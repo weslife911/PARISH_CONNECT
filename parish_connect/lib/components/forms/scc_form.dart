@@ -7,6 +7,7 @@ import 'package:parish_connect/components/steps/scc/step_general_report.dart';
 import 'package:parish_connect/components/steps/scc/step_membership.dart';
 import 'package:parish_connect/models/scc/create_scc_record_response.dart';
 import 'package:parish_connect/models/scc/scc_record_model.dart';
+import 'package:parish_connect/repositories/auth/check_auth_repository.dart';
 import 'package:parish_connect/repositories/scc/scc_report_repository.dart';
 import 'package:parish_connect/utils/logger_util.dart';
 import 'package:parish_connect/widgets/helpers.dart';
@@ -377,44 +378,58 @@ class _SCCFormState extends ConsumerState<SCCForm> {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(_formKeys.length, (index) {
-              return Flexible(
-                child: Column(
-                  children: [
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: index == _currentPage
-                            ? Theme.of(context).primaryColor
-                            : Colors.grey.shade300,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: index <= _currentPage
-                              ? Theme.of(context).primaryColor
-                              : Colors.grey.shade400,
-                          width: 2,
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${index + 1}',
-                          style: TextStyle(
+          child: Column(
+            children: [
+              Text(
+                ref.read(checkAuthRepositoryStateProvider)!.user!.parish,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.1,
+                  color: Theme.of(context).primaryColor.withOpacity(0.8),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: List.generate(_formKeys.length, (index) {
+                  return Flexible(
+                    child: Column(
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
                             color: index == _currentPage
-                                ? Colors.white
-                                : Colors.black87,
-                            fontWeight: FontWeight.bold,
+                                ? Theme.of(context).primaryColor
+                                : Colors.grey.shade300,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: index <= _currentPage
+                                  ? Theme.of(context).primaryColor
+                                  : Colors.grey.shade400,
+                              width: 2,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '${index + 1}',
+                              style: TextStyle(
+                                color: index == _currentPage
+                                    ? Colors.white
+                                    : Colors.black87,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
-              );
-            }),
+                  );
+                }),
+              ),
+            ],
           ),
         ),
 

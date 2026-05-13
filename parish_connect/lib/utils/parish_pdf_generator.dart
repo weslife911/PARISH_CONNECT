@@ -7,17 +7,12 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
 
-// NOTE: Ensure these paths are correct for your project
 import 'package:parish_connect/models/parish/parish_record_model.dart';
 import 'package:parish_connect/utils/logger_util.dart';
 import 'package:parish_connect/widgets/helpers.dart';
 import 'package:toastification/toastification.dart';
 
 class ParishPdfGenerator {
-  // ===========================================================================
-  // 1. PDF HELPER WIDGETS
-  // ===========================================================================
-
   static pw.TextStyle _textStyle(pw.Font font) =>
       pw.TextStyle(font: font, fontSize: 10, color: PdfColors.black);
 
@@ -154,10 +149,6 @@ class ParishPdfGenerator {
     );
   }
 
-  // ===========================================================================
-  // 2. MAIN GENERATOR FUNCTION
-  // ===========================================================================
-
   static Future<void> generateParishPdf(
     BuildContext context,
     ParishReportModel report,
@@ -172,7 +163,6 @@ class ParishPdfGenerator {
       final font = pw.Font.helvetica();
       final boldFont = pw.Font.helveticaBold();
 
-      // Accessing parish name from the repository state
       final parishName =
           ref.read(checkAuthRepositoryStateProvider)?.user?.parish ??
           "Parish Report";
@@ -267,30 +257,30 @@ class ParishPdfGenerator {
         ),
       );
 
-      // Changed from getApplicationDocumentsDirectory to getExternalStorageDirectory
-      // This saves to Android/data/com.package.name/files
       final directory = await getExternalStorageDirectory();
 
       if (directory == null) {
         throw Exception("Could not access the external storage directory.");
       }
 
-      final outputDir = Directory('${directory.path}/Reports/Parish');
+      final String folderPath = '${directory.path}/Parish_Reports';
+      final Directory parishDir = Directory(folderPath);
 
-      if (!await outputDir.exists()) {
-        await outputDir.create(recursive: true);
+      if (!await parishDir.exists()) {
+        await parishDir.create(recursive: true);
       }
 
-      final fileName = '${report.commissionName}_Report_$formattedDate.pdf'
+      final fileName = 'Parish_${report.commissionName}_$formattedDate.pdf'
           .replaceAll(' ', '_');
-      final file = File('${outputDir.path}/$fileName');
+      final file = File('${parishDir.path}/$fileName');
 
       await file.writeAsBytes(await pdf.save());
 
       if (!context.mounted) return;
+
       showToast(
         context,
-        'File downloaded successfully. Opening...',
+        'File has been saved suucessfully',
         type: ToastificationType.success,
       );
 

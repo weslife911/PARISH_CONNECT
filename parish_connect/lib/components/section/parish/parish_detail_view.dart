@@ -33,7 +33,6 @@ class ParishDetailView extends ConsumerWidget {
         .toLocal()
         .toIso8601String()
         .split('T')[0];
-    // Watch the parish name for display in the UI
     final parishName =
         ref.watch(checkAuthRepositoryStateProvider)?.user?.parish ?? "Parish";
 
@@ -42,7 +41,7 @@ class ParishDetailView extends ConsumerWidget {
         title: Text('${report.commissionName} Report'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.picture_as_pdf, color: Colors.red),
+            icon: const Icon(Icons.download, color: Colors.black),
             tooltip: 'Save PDF to Device',
             onPressed: () => _generatePdf(context, ref),
           ),

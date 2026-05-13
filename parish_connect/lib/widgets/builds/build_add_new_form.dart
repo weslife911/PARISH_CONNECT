@@ -7,13 +7,12 @@ import 'package:parish_connect/components/forms/deanery_form.dart';
 Widget buildAddNewForm(String title) {
   switch (title) {
     case 'SCC':
-      return SCCForm(); // New dedicated widget
+      return SCCForm();
     case 'Parish':
-      return ParishForm(); // New dedicated widget
+      return ParishForm();
     case 'Deanery':
-      return DeaneryForm(); // New dedicated widget
+      return DeaneryForm();
     default:
-      // Use a generic form for all others or keep AddNewForm as the default
       return AddNewForm(section: title);
   }
 }
