@@ -1,4 +1,3 @@
-// lib/components/scc_form/steps/step_general_report.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:parish_connect/widgets/builds/build_list_input.dart';
@@ -10,6 +9,7 @@ class StepGeneralReport extends ConsumerWidget {
   final List<String> nextMonthPlansList;
   final VoidCallback onSaveForm;
   final VoidCallback onListChanged;
+  final bool isLoading;
 
   const StepGeneralReport({
     super.key,
@@ -19,6 +19,7 @@ class StepGeneralReport extends ConsumerWidget {
     required this.nextMonthPlansList,
     required this.onSaveForm,
     required this.onListChanged,
+    this.isLoading = false,
   });
 
   @override
@@ -44,7 +45,6 @@ class StepGeneralReport extends ConsumerWidget {
           icon: Icons.gavel_outlined,
           onListChanged: onListChanged,
         ),
-
         DynamicListInputField(
           list: nextMonthPlansList,
           labelText: 'Plan for the next Month',
@@ -54,14 +54,19 @@ class StepGeneralReport extends ConsumerWidget {
         ),
         const SizedBox(height: 24),
 
-        // Submission Button
         SizedBox(
           width: double.infinity,
-          child: FilledButton.icon(
-            onPressed: onSaveForm,
-            icon: const Icon(Icons.check_circle_outline),
-            label: const Text('SUBMIT FINAL REPORT', style: TextStyle(fontSize: 16)),
-          ),
+          height: 50,
+          child: isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : FilledButton.icon(
+                  onPressed: onSaveForm,
+                  icon: const Icon(Icons.check_circle_outline),
+                  label: const Text(
+                    'SUBMIT FINAL REPORT',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
         ),
       ],
     );

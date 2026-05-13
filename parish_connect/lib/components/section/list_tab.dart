@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
+import 'package:parish_connect/components/section/no_data_found_for_sections.dart';
 import 'package:parish_connect/components/section/parish/parish_detail_view.dart';
 import 'package:parish_connect/components/section/scc/scc_detail_view.dart';
 import 'package:parish_connect/repositories/parish/parish_report_repository.dart';
@@ -24,7 +25,7 @@ class ListTab extends ConsumerWidget {
       'ListTab: _buildRecordList called for section: $sectionTitle with ${records.length} records.',
     );
     if (records.isEmpty) {
-      return Center(child: Text('No $sectionTitle reports found.'));
+      return NoDataFoundForSections(sectionTitle: sectionTitle);
     }
 
     final theme = Theme.of(context);

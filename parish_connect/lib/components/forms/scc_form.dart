@@ -1,5 +1,3 @@
-// scc_form.dart (Multi-step Form using PageView)
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:parish_connect/components/steps/scc/step_activities_part1.dart';
@@ -24,16 +22,13 @@ class SCCForm extends ConsumerStatefulWidget {
 
 class _SCCFormState extends ConsumerState<SCCForm> {
   CreateSccRecordResponseModel? createSccRecordResponseModel;
-  // --- Navigation & Validation State ---
   final PageController _pageController = PageController();
   int _currentPage = 0;
-  // Create a form key for each step to validate independently
-  final List<GlobalKey<FormState>> _formKeys =
-      List.generate(5, (_) => GlobalKey<FormState>());
+  final List<GlobalKey<FormState>> _formKeys = List.generate(
+    5,
+    (_) => GlobalKey<FormState>(),
+  );
 
-  // --- Report Data Controllers (for non-list fields) ---
-
-  // Step 1: Core Info
   final _sccNameController = TextEditingController();
   DateTime? _periodStart;
   DateTime? _periodEnd;
@@ -42,7 +37,6 @@ class _SCCFormState extends ConsumerState<SCCForm> {
   final _councilMeetingsController = TextEditingController();
   final _generalMeetingsController = TextEditingController();
 
-  // Step 2: Membership & Sacramental
   final _totalMembershipController = TextEditingController();
   final _childrenController = TextEditingController();
   final _youthController = TextEditingController();
@@ -51,9 +45,6 @@ class _SCCFormState extends ConsumerState<SCCForm> {
   final _gospelSharingDoneController = TextEditingController();
   final _baptismController = TextEditingController();
 
-  // --- List<String> State Variables ---
-
-  // Step 3 & 4: Commission Activities
   final List<String> _biblicalApostolateList = [];
   final List<String> _liturgyList = [];
   final List<String> _financeList = [];
@@ -63,14 +54,13 @@ class _SCCFormState extends ConsumerState<SCCForm> {
   final List<String> _catecheticalList = [];
   final List<String> _healthCareList = [];
 
-  // Step 5: General Report Sections
   final List<String> _problemsList = [];
   final List<String> _solutionsList = [];
   final List<String> _issuesList = [];
   final List<String> _nextMonthPlansList = [];
 
-  // This is used to force a rebuild on the last page when a list item is added/removed,
-  // which re-runs the list validation logic check in _nextStep and _saveForm.
+  bool _isLoading = false;
+
   void _onListChanged() {
     setState(() {});
   }
@@ -93,50 +83,69 @@ class _SCCFormState extends ConsumerState<SCCForm> {
     super.dispose();
   }
 
-  // --- Navigation Logic ---
-
   void _nextStep() {
     logger.d('SCCForm: Navigating from Step $_currentPage');
 
-    // Validate the current form step first
     if (!_formKeys[_currentPage].currentState!.validate()) {
-      logger.w('SCCForm: Validation failed on current page ($_currentPage). Stopping navigation.');
+      logger.w(
+        'SCCForm: Validation failed on current page ($_currentPage). Stopping navigation.',
+      );
       return;
     }
 
-    // Custom validation for dates on the first step
     if (_currentPage == 0 && (_periodStart == null || _periodEnd == null)) {
-      showToast(context, 'Please select the Period Covered (Start and End Date)', type: ToastificationType.error);
+      showToast(
+        context,
+        'Please select the Period Covered (Start and End Date)',
+        type: ToastificationType.error,
+      );
       logger.w('SCCForm: Step 0 Date validation failed (Dates are null).');
       return;
     }
 
-    // Custom validation for required List<String> fields
-    // Biblical Apostolate is required on step 2 (index 2)
     if (_currentPage == 2) {
-        if (_biblicalApostolateList.isEmpty) {
-            showToast(context, 'Activities: Biblical Apostolate is required.', type: ToastificationType.error);
-            logger.w('SCCForm: Step 2 List validation failed (Biblical Apostolate is empty).');
-            return;
-        }
+      if (_biblicalApostolateList.isEmpty) {
+        showToast(
+          context,
+          'Activities: Biblical Apostolate is required.',
+          type: ToastificationType.error,
+        );
+        logger.w(
+          'SCCForm: Step 2 List validation failed (Biblical Apostolate is empty).',
+        );
+        return;
+      }
     }
-    // Problems Encountered is required on step 4 (index 4)
-    // NOTE: This is checked here, but the actual save check will handle the submit button.
+
     if (_currentPage == 4) {
-        if (_problemsList.isEmpty) {
-            showToast(context, 'Problems Encountered is required.', type: ToastificationType.error);
-            logger.w('SCCForm: Step 4 List validation failed (Problems Encountered is empty).');
-            return;
-        }
-        if (_nextMonthPlansList.isEmpty) {
-            showToast(context, 'Plan for the next Month is required.', type: ToastificationType.error);
-            logger.w('SCCForm: Step 4 List validation failed (Next Month Plan is empty).');
-            return;
-        }
+      if (_problemsList.isEmpty) {
+        showToast(
+          context,
+          'Problems Encountered is required.',
+          type: ToastificationType.error,
+        );
+        logger.w(
+          'SCCForm: Step 4 List validation failed (Problems Encountered is empty).',
+        );
+        return;
+      }
+      if (_nextMonthPlansList.isEmpty) {
+        showToast(
+          context,
+          'Plan for the next Month is required.',
+          type: ToastificationType.error,
+        );
+        logger.w(
+          'SCCForm: Step 4 List validation failed (Next Month Plan is empty).',
+        );
+        return;
+      }
     }
 
     if (_currentPage < _formKeys.length - 1) {
-      logger.d('SCCForm: Validation passed on Step $_currentPage. Moving to next page.');
+      logger.d(
+        'SCCForm: Validation passed on Step $_currentPage. Moving to next page.',
+      );
       _pageController.nextPage(
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOutCubic,
@@ -172,66 +181,79 @@ class _SCCFormState extends ConsumerState<SCCForm> {
         _periodStart = res.start;
         _periodEnd = res.end;
       });
-      logger.d('SCCForm: Dates selected: Start: $_periodStart, End: $_periodEnd');
+      logger.d(
+        'SCCForm: Dates selected: Start: $_periodStart, End: $_periodEnd',
+      );
     }
   }
 
-  // --- Submission Logic ---
   Future<void> _saveForm() async {
-    // Final validation before submission
     if (!_formKeys[_currentPage].currentState!.validate()) {
-      logger.w('SCCForm: Final validation failed on the last page before submission.');
+      logger.w(
+        'SCCForm: Final validation failed on the last page before submission.',
+      );
       return;
     }
 
-    // Final check for required list fields
     if (_problemsList.isEmpty) {
-        showToast(context, 'Problems Encountered is a required field.', type: ToastificationType.error);
-        logger.w('SCCForm: Final check failed: Problems Encountered list is empty.');
-        return;
+      showToast(
+        context,
+        'Problems Encountered is a required field.',
+        type: ToastificationType.error,
+      );
+      logger.w(
+        'SCCForm: Final check failed: Problems Encountered list is empty.',
+      );
+      return;
     }
     if (_nextMonthPlansList.isEmpty) {
-        showToast(context, 'Plan for the next Month is a required field.', type: ToastificationType.error);
-        logger.w('SCCForm: Final check failed: Next Month Plan list is empty.');
-        return;
+      showToast(
+        context,
+        'Plan for the next Month is a required field.',
+        type: ToastificationType.error,
+      );
+      logger.w('SCCForm: Final check failed: Next Month Plan list is empty.');
+      return;
     }
 
-    // DEBUG: Log the collected non-list data before model creation
     logger.i('SCCForm: --- REPORT SUBMISSION INITIATED ---');
     logger.i('SCCForm: SCC Name: ${_sccNameController.text}');
     logger.i('SCCForm: Period: $_periodStart to $_periodEnd');
     logger.i('SCCForm: Total Families: ${_totalFamiliesController.text}');
     logger.i('SCCForm: Total Membership: ${_totalMembershipController.text}');
-    logger.i('SCCForm: Biblical Apostolate Items: ${_biblicalApostolateList.length}');
+    logger.i(
+      'SCCForm: Biblical Apostolate Items: ${_biblicalApostolateList.length}',
+    );
     logger.i('SCCForm: Problems Encountered Items: ${_problemsList.length}');
     logger.i('SCCForm: Next Month Plan Items: ${_nextMonthPlansList.length}');
-
 
     final newReport = SccReportModel(
       sccName: _sccNameController.text,
       periodStart: _periodStart!,
       periodEnd: _periodEnd!,
 
-      // Step 1 Core
       totalFamilies: int.tryParse(_totalFamiliesController.text) ?? 0,
-      gospelSharingGroups: int.tryParse(_gospelSharingGroupsController.text) ?? 0,
+      gospelSharingGroups:
+          int.tryParse(_gospelSharingGroupsController.text) ?? 0,
       councilMeetings: int.tryParse(_councilMeetingsController.text) ?? 0,
       generalMeetings: int.tryParse(_generalMeetingsController.text) ?? 0,
-      noOfCommissions: 0, activeCommissions: 0, // Placeholder
+      noOfCommissions: 0,
+      activeCommissions: 0,
 
-      // Step 2 Membership & Sacramental
       totalMembership: int.tryParse(_totalMembershipController.text) ?? 0,
       children: int.tryParse(_childrenController.text) ?? 0,
       youth: int.tryParse(_youthController.text) ?? 0,
       adults: int.tryParse(_adultsController.text) ?? 0,
-      gospelSharingExpected: int.tryParse(_gospelSharingExpectedController.text) ?? 0,
+      gospelSharingExpected:
+          int.tryParse(_gospelSharingExpectedController.text) ?? 0,
       gospelSharingDone: int.tryParse(_gospelSharingDoneController.text) ?? 0,
-      noChristiansAttendingGS: 0, // Placeholder
-      gsAttendancePercentage: 0.0, // Placeholder
+      noChristiansAttendingGS: 0,
+      gsAttendancePercentage: 0.0,
       baptism: int.tryParse(_baptismController.text) ?? 0,
-      lapsedChristians: 0, irregularMarriages: 0, burials: 0, // Placeholder
+      lapsedChristians: 0,
+      irregularMarriages: 0,
+      burials: 0,
 
-      // Step 3 & 4 Activities (USING LIST STATE DIRECTLY)
       biblicalApostolateActivities: _biblicalApostolateList,
       liturgyActivities: _liturgyList,
       financeActivities: _financeList,
@@ -240,11 +262,15 @@ class _SCCFormState extends ConsumerState<SCCForm> {
       youthApostolateActivities: _youthApostolateList,
       catecheticalActivities: _catecheticalList,
       healthCareActivities: _healthCareList,
-      socialCommunicationActivities: [], socialWelfareActivities: [], educationActivities: [],
-      vocationActivities: [], dialogueActivities: [], womensAffairsActivities: [],
-      mensAffairsActivities: [], prayerAndActionActivities: [],
+      socialCommunicationActivities: [],
+      socialWelfareActivities: [],
+      educationActivities: [],
+      vocationActivities: [],
+      dialogueActivities: [],
+      womensAffairsActivities: [],
+      mensAffairsActivities: [],
+      prayerAndActionActivities: [],
 
-      // Step 5 General Report Sections
       problemsEncountered: _problemsList,
       proposedSolutions: _solutionsList,
       issuesForCouncil: _issuesList,
@@ -253,31 +279,52 @@ class _SCCFormState extends ConsumerState<SCCForm> {
 
     logger.d('SCCForm: Full JSON Payload: ${newReport.toJson()}');
 
-    createSccRecordResponseModel = await ref.read(sccReportRepositoryProvider).createSCCReport(newReport);
+    setState(() => _isLoading = true);
 
-    logger.i('SCCForm: Repository Response - Success: ${createSccRecordResponseModel!.success}, Message: ${createSccRecordResponseModel!.message}');
+    try {
+      createSccRecordResponseModel = await ref
+          .read(sccReportRepositoryProvider)
+          .createSCCReport(newReport);
 
+      logger.i(
+        'SCCForm: Repository Response - Success: ${createSccRecordResponseModel!.success}, Message: ${createSccRecordResponseModel!.message}',
+      );
 
-    if(mounted) {
-      showToast(context, createSccRecordResponseModel!.message, type: createSccRecordResponseModel!.success == true ? ToastificationType.success : ToastificationType.error);
-    }
+      if (mounted) {
+        showToast(
+          context,
+          createSccRecordResponseModel!.message,
+          type: createSccRecordResponseModel!.success == true
+              ? ToastificationType.success
+              : ToastificationType.error,
+        );
 
-    if(createSccRecordResponseModel!.success == true) {
-      if(mounted) {
-        logger.i('SCCForm: Submission successful. Navigating to section page.');
-        context.pushNamed(
-          'section',
-          extra: {
-            'title': "SCC",
-            'initialTabIndex': 1,
-          },
+        if (createSccRecordResponseModel!.success == true) {
+          logger.i(
+            'SCCForm: Submission successful. Navigating to section page.',
+          );
+          ref.invalidate(getSCCRecordsFutureProvider);
+          context.pushNamed(
+            'section',
+            extra: {'title': "SCC", 'initialTabIndex': 1},
+          );
+        }
+      }
+    } catch (e) {
+      logger.e('SCCForm: Error during submission: $e');
+      if (mounted) {
+        showToast(
+          context,
+          'An unexpected error occurred. Please try again.',
+          type: ToastificationType.error,
         );
       }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
-
   }
-
-  // --- Step Content Widgets (NOW USING SEPARATED WIDGETS) ---
 
   List<Widget> get _pages => [
     StepCoreInfo(
@@ -320,15 +367,14 @@ class _SCCFormState extends ConsumerState<SCCForm> {
       nextMonthPlansList: _nextMonthPlansList,
       onSaveForm: _saveForm,
       onListChanged: _onListChanged,
+      isLoading: _isLoading,
     ),
   ];
-
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // --- Step Indicator ---
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
           child: Row(
@@ -342,10 +388,14 @@ class _SCCFormState extends ConsumerState<SCCForm> {
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: index == _currentPage ? Theme.of(context).primaryColor : Colors.grey.shade300,
+                        color: index == _currentPage
+                            ? Theme.of(context).primaryColor
+                            : Colors.grey.shade300,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: index <= _currentPage ? Theme.of(context).primaryColor : Colors.grey.shade400,
+                          color: index <= _currentPage
+                              ? Theme.of(context).primaryColor
+                              : Colors.grey.shade400,
                           width: 2,
                         ),
                       ),
@@ -353,7 +403,9 @@ class _SCCFormState extends ConsumerState<SCCForm> {
                         child: Text(
                           '${index + 1}',
                           style: TextStyle(
-                            color: index == _currentPage ? Colors.white : Colors.black87,
+                            color: index == _currentPage
+                                ? Colors.white
+                                : Colors.black87,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -368,11 +420,10 @@ class _SCCFormState extends ConsumerState<SCCForm> {
 
         const Divider(height: 0),
 
-        // --- Page View (Animated Step Content) ---
         Expanded(
           child: PageView.builder(
             controller: _pageController,
-            physics: const NeverScrollableScrollPhysics(), // Disable swiping
+            physics: const NeverScrollableScrollPhysics(),
             itemCount: _formKeys.length,
             onPageChanged: (index) {
               setState(() {
@@ -383,22 +434,17 @@ class _SCCFormState extends ConsumerState<SCCForm> {
             itemBuilder: (context, index) {
               return SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
-                child: Form(
-                  key: _formKeys[index],
-                  child: _pages[index],
-                ),
+                child: Form(key: _formKeys[index], child: _pages[index]),
               );
             },
           ),
         ),
 
-        // --- Navigation Buttons ---
         Padding(
           padding: const EdgeInsets.fromLTRB(16.0, 4.0, 16.0, 32.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Previous Button
               Expanded(
                 child: Visibility(
                   visible: _currentPage > 0,
@@ -412,11 +458,10 @@ class _SCCFormState extends ConsumerState<SCCForm> {
               if (_currentPage > 0 && _currentPage < _formKeys.length - 1)
                 const SizedBox(width: 16),
 
-              // Next/Submit Button (Show Next button until the last page)
               Expanded(
                 child: Visibility(
                   visible: _currentPage < _formKeys.length - 1,
-                  replacement: const SizedBox.shrink(), // Hides the button on the last page
+                  replacement: const SizedBox.shrink(),
                   child: FilledButton.icon(
                     onPressed: _nextStep,
                     icon: const Icon(Icons.arrow_forward),
