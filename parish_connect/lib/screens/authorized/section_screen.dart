@@ -13,7 +13,6 @@ import '../../widgets/app_drawer.dart';
 // =============================================================================
 
 class SectionScreen extends StatefulWidget {
-  // MODIFIED: Added optional initialTabIndex, defaulting to 0 (Overview)
   const SectionScreen({
     super.key,
     required this.title,
@@ -21,7 +20,7 @@ class SectionScreen extends StatefulWidget {
   });
 
   final String title;
-  final int initialTabIndex; // New field to store the initial tab index
+  final int initialTabIndex;
 
   @override
   State<SectionScreen> createState() => _SectionScreenState();
@@ -29,10 +28,8 @@ class SectionScreen extends StatefulWidget {
 
 class _SectionScreenState extends State<SectionScreen>
     with SingleTickerProviderStateMixin {
-  // MODIFIED: Changed initialization to happen in initState
   late final TabController _tab;
 
-  // DUMMY DATA: This data is for the entire app, ListTab will now filter it.
   final List<String> sections = const [
     'St. Anthony SCC',
     'St. Jude SCC',
@@ -49,11 +46,10 @@ class _SectionScreenState extends State<SectionScreen>
   @override
   void initState() {
     super.initState();
-    // MODIFIED: Initialize TabController using the initialTabIndex from the widget
     _tab = TabController(
       length: 3,
       vsync: this,
-      initialIndex: widget.initialTabIndex, // Use the new parameter
+      initialIndex: widget.initialTabIndex,
     );
   }
 
@@ -81,10 +77,9 @@ class _SectionScreenState extends State<SectionScreen>
                   borderRadius: BorderRadius.circular(12),
                 ),
                 labelPadding: const EdgeInsets.symmetric(horizontal: 16),
-                labelStyle: Theme.of(context)
-                    .textTheme
-                    .labelLarge
-                    ?.copyWith(fontWeight: FontWeight.w700),
+                labelStyle: Theme.of(
+                  context,
+                ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
                 unselectedLabelColor: cs.onSurfaceVariant,
                 tabs: const [
                   Tab(text: 'Overview'),
@@ -102,7 +97,7 @@ class _SectionScreenState extends State<SectionScreen>
         children: [
           buildOverviewTab(widget.title),
           buildListTab(widget.title, sections),
-          buildAddNewForm(widget.title)
+          buildAddNewForm(widget.title),
         ],
       ),
     );
