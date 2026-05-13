@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:toastification/toastification.dart';
 
-// =============================================================================
-// HELPERS
-// =============================================================================
-
-Route AnimatedRoute(Widget child) {
+Route animatedRoute(Widget child) {
   return PageRouteBuilder(
     transitionDuration: const Duration(milliseconds: 350),
     reverseTransitionDuration: const Duration(milliseconds: 300),
     pageBuilder: (context, animation, secondaryAnimation) => child,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+      );
       return FadeTransition(
         opacity: curved,
         child: SlideTransition(
-          position: Tween(begin: const Offset(0, 0.06), end: Offset.zero).animate(curved),
+          position: Tween(
+            begin: const Offset(0, 0.06),
+            end: Offset.zero,
+          ).animate(curved),
           child: child,
         ),
       );
@@ -23,7 +25,11 @@ Route AnimatedRoute(Widget child) {
   );
 }
 
-void showToast(BuildContext context, String msg, {ToastificationType type = ToastificationType.info}) {
+void showToast(
+  BuildContext context,
+  String msg, {
+  ToastificationType type = ToastificationType.info,
+}) {
   try {
     toastification.show(
       context: context,
@@ -35,7 +41,6 @@ void showToast(BuildContext context, String msg, {ToastificationType type = Toas
       showProgressBar: true,
     );
   } catch (_) {
-    // Fallback to SnackBar in unlikely case toastification fails
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 }

@@ -95,7 +95,7 @@ class HomeScreen extends ConsumerWidget {
                       title: 'Admin',
                       onTap: () => Navigator.of(
                         context,
-                      ).push(AnimatedRoute(const AdminDashboardScreen())),
+                      ).push(animatedRoute(const AdminDashboardScreen())),
                     )
                     .animate(delay: 240.ms)
                     .fadeIn(duration: 300.ms)
@@ -126,6 +126,6 @@ class HomeScreen extends ConsumerWidget {
   }
 
   void _openSection(BuildContext context, String title) {
-    Navigator.of(context).push(AnimatedRoute(SectionScreen(title: title)));
+    Navigator.of(context).push(animatedRoute(SectionScreen(title: title)));
   }
 }

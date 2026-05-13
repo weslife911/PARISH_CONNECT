@@ -5,7 +5,7 @@ import 'package:parish_connect/repositories/storage/local_storage_repository.dar
 import 'package:go_router/go_router.dart';
 import '../main.dart';
 import '../screens/authorized/section_screen.dart';
-import 'helpers.dart'; // For AnimatedRoute
+import 'helpers.dart'; // For animatedRoute
 import 'package:parish_connect/repositories/auth/check_auth_repository.dart';
 
 class AppDrawer extends ConsumerWidget {
@@ -89,7 +89,7 @@ class AppDrawer extends ConsumerWidget {
                       Navigator.pop(context);
                       Navigator.of(
                         context,
-                      ).push(AnimatedRoute(SectionScreen(title: 'SCC')));
+                      ).push(animatedRoute(SectionScreen(title: 'SCC')));
                     },
                   ),
                   ListTile(
@@ -102,7 +102,7 @@ class AppDrawer extends ConsumerWidget {
                       Navigator.pop(context);
                       Navigator.of(
                         context,
-                      ).push(AnimatedRoute(SectionScreen(title: 'Parish')));
+                      ).push(animatedRoute(SectionScreen(title: 'Parish')));
                     },
                   ),
                   ListTile(
@@ -114,7 +114,7 @@ class AppDrawer extends ConsumerWidget {
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.of(context).push(
-                        AnimatedRoute(SectionScreen(title: 'Mission Station')),
+                        animatedRoute(SectionScreen(title: 'Mission Station')),
                       );
                     },
                   ),
@@ -128,7 +128,7 @@ class AppDrawer extends ConsumerWidget {
                       Navigator.pop(context);
                       Navigator.of(
                         context,
-                      ).push(AnimatedRoute(SectionScreen(title: 'Deanery')));
+                      ).push(animatedRoute(SectionScreen(title: 'Deanery')));
                     },
                   ),
                   Divider(),

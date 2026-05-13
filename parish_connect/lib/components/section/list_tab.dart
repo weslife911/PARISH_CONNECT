@@ -74,7 +74,7 @@ class ListTab extends ConsumerWidget {
               ),
               onTap: () => Navigator.of(
                 context,
-              ).push(AnimatedRoute(SCCDetailView(report: record))),
+              ).push(animatedRoute(SCCDetailView(report: record))),
             ),
           );
         } else if (sectionTitle == "Parish") {
@@ -121,7 +121,7 @@ class ListTab extends ConsumerWidget {
               ),
               onTap: () => Navigator.of(
                 context,
-              ).push(AnimatedRoute(ParishDetailView(report: record))),
+              ).push(animatedRoute(ParishDetailView(report: record))),
             ),
           );
         } else {
