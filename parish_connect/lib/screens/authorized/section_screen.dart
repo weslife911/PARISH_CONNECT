@@ -8,10 +8,6 @@ import 'package:parish_connect/widgets/builds/build_list_tab.dart';
 
 import '../../widgets/app_drawer.dart';
 
-// =============================================================================
-// SECTION SCREEN (SCC / Parish / Mission Station / Deanery)
-// =============================================================================
-
 class SectionScreen extends StatefulWidget {
   const SectionScreen({
     super.key,
